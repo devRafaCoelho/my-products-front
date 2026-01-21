@@ -99,13 +99,44 @@ function Login() {
             </Typography>
           </Box>
         )}
+        {isMobile && (
+          <Box
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+              color: theme.palette.primary.contrastText,
+              py: 8,
+              px: 4,
+            }}
+          >
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              gutterBottom
+              align="center"
+            >
+              Bem-vindo de volta!
+            </Typography>
+            <Typography variant="body1" align="center" sx={{ mb: 1 }}>
+              Acesse sua conta
+            </Typography>
+            <Typography variant="body2" align="center" sx={{ opacity: 0.9 }}>
+              Gerencie seu estoque doméstico com praticidade
+            </Typography>
+          </Box>
+        )}
         <Box
           sx={{
             flex: 1,
-            p: isMobile ? 2 : 6,
+            p: isMobile ? 3 : 6,
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
+            mt: isMobile ? -3 : 0,
+            background: isMobile
+              ? theme.palette.background.paper
+              : "transparent",
+            borderRadius: isMobile ? "24px 24px 0 0" : 0,
+            position: "relative",
           }}
         >
           <Typography variant="h5" fontWeight={600} mb={4} align="center">
