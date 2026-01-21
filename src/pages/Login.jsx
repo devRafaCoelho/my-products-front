@@ -158,14 +158,28 @@ function Login() {
               Entrar
             </Button>
           </form>
-          <Box sx={{ mt: 3, textAlign: "center" }}>
-            <Typography variant="body2">
+          <Box
+            sx={{
+              mt: 4,
+              pt: 3,
+              borderTop: `1px solid ${theme.palette.divider}`,
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
               Não tem uma conta?{" "}
               <Link
                 component="button"
                 variant="body2"
                 onClick={() => navigate("/signup")}
-                sx={{ cursor: "pointer" }}
+                sx={{
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  "&:hover": {
+                    textDecoration: "underline",
+                  },
+                }}
               >
                 Cadastre-se
               </Link>

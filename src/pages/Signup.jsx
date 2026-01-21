@@ -16,6 +16,7 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  Link,
 } from "@mui/material";
 import CpfInput from "../components/inputs/CpfInput";
 import PhoneInput from "../components/inputs/PhoneInput";
@@ -280,6 +281,33 @@ function Signup() {
               )}
             </Box>
           </form>
+          <Box
+            sx={{
+              mt: 4,
+              pt: 3,
+              borderTop: `1px solid ${theme.palette.divider}`,
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Já tem uma conta?{" "}
+              <Link
+                component="button"
+                variant="body2"
+                onClick={() => navigate("/login")}
+                sx={{
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  "&:hover": {
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                Faça login
+              </Link>
+            </Typography>
+          </Box>
         </Box>
       </Paper>
     </Box>
