@@ -93,7 +93,7 @@ function Signup() {
         justifyContent: "center",
         background: isMobile
           ? theme.palette.background.default
-          : `linear-gradient(90deg, ${theme.palette.primary.light} 50%, ${theme.palette.background.default} 50%)`,
+          : `linear-gradient(90deg, #42a5f5 50%, ${theme.palette.background.default} 50%)`,
       }}
     >
       <Paper
@@ -110,8 +110,8 @@ function Signup() {
           <Box
             sx={{
               flex: 1,
-              background: theme.palette.primary.light,
-              color: theme.palette.primary.contrastText,
+              background: "#42a5f5",
+              color: "#fff",
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
@@ -134,8 +134,8 @@ function Signup() {
         {isMobile && (
           <Box
             sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-              color: theme.palette.primary.contrastText,
+              background: "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)",
+              color: "#fff",
               py: 8,
               px: 4,
             }}
@@ -194,6 +194,12 @@ function Signup() {
                       fullWidth
                       error={!!errors.firstName}
                       helperText={errors.firstName?.message}
+                      sx={{
+                        "& input:-webkit-autofill": {
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitTextFillColor: theme.palette.text.primary,
+                        },
+                      }}
                     />
                   )}
                 />
@@ -207,6 +213,12 @@ function Signup() {
                       fullWidth
                       error={!!errors.lastName}
                       helperText={errors.lastName?.message}
+                      sx={{
+                        "& input:-webkit-autofill": {
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitTextFillColor: theme.palette.text.primary,
+                        },
+                      }}
                     />
                   )}
                 />
@@ -225,6 +237,12 @@ function Signup() {
                       fullWidth
                       error={!!errors.email}
                       helperText={errors.email?.message}
+                      sx={{
+                        "& input:-webkit-autofill": {
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitTextFillColor: theme.palette.text.primary,
+                        },
+                      }}
                     />
                   )}
                 />
@@ -271,6 +289,12 @@ function Signup() {
                       helperText={
                         touchedFields.password ? errors.password?.message : ""
                       }
+                      sx={{
+                        "& input:-webkit-autofill": {
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitTextFillColor: theme.palette.text.primary,
+                        },
+                      }}
                     />
                   )}
                 />

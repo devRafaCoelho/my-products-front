@@ -1,22 +1,31 @@
-import { ThemeProvider } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import Header from "./components/Header";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Account from "./pages/Account";
+import Finance from "./pages/Finance";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Products from "./pages/Products";
 import Signup from "./pages/Signup";
-import theme from "./theme/theme";
 import { getItem } from "./utils/storage";
 
 function ProtectedRoutes({ redirectTo }) {
   const isAuth = getItem("token");
 
-  return isAuth ? <Outlet /> : <Navigate to={redirectTo} />;
+  return isAuth ? (
+    <>
+      <Header />
+      <Outlet />
+    </>
+  ) : (
+    <Navigate to={redirectTo} />
+  );
 }
 
 export default function MainRoutes() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <CssBaseline />
       <Routes>
         <Route path="*" element={<Navigate to="/login" />} />
@@ -24,7 +33,9 @@ export default function MainRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route element={<ProtectedRoutes redirectTo="/login" />}>
           <Route path="/home" element={<Home />} />
-          <Route path="/account" element={<Account />} />{" "}
+          <Route path="/account" element={<Account />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/finance" element={<Finance />} />
         </Route>
       </Routes>
     </ThemeProvider>

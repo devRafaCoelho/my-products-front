@@ -7,5 +7,6 @@ export function getItem(key) {
 }
 
 export function logOut() {
-  localStorage.clear();
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 }
