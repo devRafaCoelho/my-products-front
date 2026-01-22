@@ -115,7 +115,7 @@ function Login() {
               gutterBottom
               align="center"
             >
-              Bem-vindo de volta!
+              Estoque Inteligente
             </Typography>
             <Typography variant="body1" align="center" sx={{ mb: 1 }}>
               Acesse sua conta

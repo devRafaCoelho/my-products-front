@@ -10,6 +10,12 @@ import {
   AppBar,
   Avatar,
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   IconButton,
   ListItemIcon,
@@ -43,6 +49,7 @@ function Header() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [anchorElNav, setAnchorElNav] = useState(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const userData = JSON.parse(getItem("user") || "{}");
   const firstName = userData.firstname || "";
@@ -76,8 +83,17 @@ function Header() {
 
   const handleLogout = () => {
     handleCloseUserMenu();
+    setLogoutDialogOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setLogoutDialogOpen(false);
     logOut();
     navigate("/login");
+  };
+
+  const handleCancelLogout = () => {
+    setLogoutDialogOpen(false);
   };
 
   const handleTabChange = (event, newValue) => {
@@ -209,6 +225,34 @@ function Header() {
           </MenuItem>
         ))}
       </Menu>
+
+      {/* Dialog de Confirmação de Logout */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleCancelLogout}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <DialogTitle id="logout-dialog-title">Confirmar saída</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            Tem certeza que deseja sair da sua conta?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelLogout} color="primary">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmLogout}
+            color="primary"
+            variant="contained"
+            autoFocus
+          >
+            Sair
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppBar>
   );
 }
