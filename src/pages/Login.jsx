@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LoginSchema } from "../schemas/LoginSchema";
 import userService from "../services/userService";
 import { setItem } from "../utils/storage";
+import { AppContext } from "../contexts/AppContext";
 import {
   Box,
   Button,
@@ -20,6 +21,7 @@ import { useTheme } from "@mui/material/styles";
 
 function Login() {
   const navigate = useNavigate();
+  const { setUserData } = useContext(AppContext);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [loading, setLoading] = useState(false);
@@ -43,8 +45,12 @@ function Login() {
     setError("");
     try {
       const response = await userService.login(data);
-      setItem("token", response.token);
-      setItem("user", JSON.stringify(response.user));
+      const userDataWithToken = {
+        ...response.user,
+        token: response.token,
+      };
+      setItem("user", JSON.stringify(userDataWithToken));
+      setUserData(userDataWithToken);
       navigate("/home");
     } catch (err) {
       setError(err?.message || "Erro ao fazer login");
