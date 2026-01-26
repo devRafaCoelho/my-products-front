@@ -323,6 +323,8 @@ function Products() {
             display: "flex",
             flexDirection: { xs: "column", sm: "row" },
             gap: 2,
+            flexShrink: 0,
+            flexWrap: "wrap",
           }}
         >
           <TextField
@@ -337,15 +339,28 @@ function Products() {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: { xs: "100%", sm: 250 } }}
+            sx={{
+              width: { xs: "100%", sm: 250 },
+              flexShrink: 0,
+            }}
           />
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              flexShrink: 0,
+              flexWrap: "nowrap",
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
             <Button
               variant="outlined"
               startIcon={<FilterListIcon />}
               onClick={handleOpenFilterDrawer}
-              fullWidth
-              sx={{ flex: { xs: 1, sm: "none" } }}
+              sx={{
+                flex: 1,
+                whiteSpace: "nowrap",
+              }}
             >
               Filtrar
             </Button>
@@ -353,8 +368,10 @@ function Products() {
               variant="contained"
               startIcon={<AddIcon />}
               disabled
-              fullWidth
-              sx={{ flex: { xs: 1, sm: "none" } }}
+              sx={{
+                flex: 1,
+                whiteSpace: "nowrap",
+              }}
             >
               Novo Produto
             </Button>
@@ -468,7 +485,7 @@ function Products() {
                       </Tooltip>
                       <Tooltip title="Excluir produto">
                         <IconButton
-                          color="error"
+                          // color="error"
                           size="small"
                           onClick={() => handleDeleteClick(product)}
                         >
