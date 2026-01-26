@@ -189,7 +189,7 @@ function ProductDetail() {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton onClick={() => navigate("/products")} size="small">
+          <IconButton onClick={() => navigate(-1)} size="small">
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h4" component="h1">
