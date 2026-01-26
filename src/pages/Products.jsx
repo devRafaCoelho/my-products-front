@@ -358,8 +358,8 @@ function Products() {
               startIcon={<FilterListIcon />}
               onClick={handleOpenFilterDrawer}
               sx={{
-                flex: 1,
                 whiteSpace: "nowrap",
+                flex: { xs: 1, sm: "none" },
               }}
             >
               Filtrar
@@ -369,8 +369,8 @@ function Products() {
               startIcon={<AddIcon />}
               disabled
               sx={{
-                flex: 1,
                 whiteSpace: "nowrap",
+                flex: { xs: 1, sm: "none" },
               }}
             >
               Novo Produto
