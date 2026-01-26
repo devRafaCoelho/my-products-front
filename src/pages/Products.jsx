@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -22,21 +22,39 @@ import {
   Alert,
   Snackbar,
   Tooltip,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Drawer,
+  Divider,
+  InputAdornment,
 } from "@mui/material";
 import {
   Visibility as VisibilityIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
   FilterList as FilterListIcon,
+  Search as SearchIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon,
 } from "@mui/icons-material";
 import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
+import categoryService from "../services/categoryService";
 
 function Products() {
   const navigate = useNavigate();
   const { userData } = useContext(AppContext);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("name");
@@ -45,27 +63,128 @@ function Products() {
   const [successMessage, setSuccessMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
+  // Estados para filtros e busca
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [filters, setFilters] = useState({
+    id_category: "",
+    expiration_date: "",
+  });
+
+  // Refs para valores atuais sem causar re-render
+  const currentParamsRef = useRef({
+    page: pagination.page,
+    limit: pagination.limit,
+    search: "",
+    id_category: "",
+    expiration_date: "",
+  });
+
+  // Atualizar refs quando valores mudarem
   useEffect(() => {
-    if (userData?.token) {
-      fetchProducts();
-    } else {
+    currentParamsRef.current = {
+      page: pagination.page,
+      limit: pagination.limit,
+      search: debouncedSearchTerm,
+      id_category: filters.id_category,
+      expiration_date: filters.expiration_date,
+    };
+  });
+
+  // Debounce para o searchTerm
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms de delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchCategories = useCallback(async () => {
+    if (!userData?.token) return;
+    try {
+      const data = await categoryService.getAllCategories(userData.token);
+      setCategories(data);
+    } catch (err) {
+      console.error("Erro ao carregar categorias:", err);
+    }
+  }, [userData?.token]);
+
+  const fetchProducts = useCallback(async () => {
+    if (!userData?.token) {
       setLoading(false);
       setError("Token de autenticação não encontrado. Faça login novamente.");
+      return;
     }
-  }, [userData]);
 
-  const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await productService.getAllProducts(userData?.token);
-      setProducts(data);
+
+      const params = currentParamsRef.current;
+      const queryParams = {
+        page: params.page,
+        limit: params.limit,
+      };
+
+      if (params.search) {
+        queryParams.search = params.search;
+      }
+
+      if (params.id_category) {
+        queryParams.id_category = params.id_category;
+      }
+
+      if (params.expiration_date) {
+        queryParams.expiration_date = params.expiration_date;
+      }
+
+      const response = await productService.getAllProducts(
+        userData.token,
+        queryParams,
+      );
+
+      setProducts(response.data || []);
+      setPagination({
+        page: response.pagination.page,
+        limit: response.pagination.limit,
+        total: response.pagination.total,
+        totalPages: response.pagination.totalPages,
+      });
     } catch (err) {
       setError(err.message || "Erro ao carregar produtos");
+      setProducts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userData?.token]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Carregar produtos quando parâmetros mudarem
+  useEffect(() => {
+    const shouldResetPage =
+      debouncedSearchTerm !== "" ||
+      filters.id_category ||
+      filters.expiration_date;
+
+    if (shouldResetPage && pagination.page !== 1) {
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    } else {
+      fetchProducts();
+    }
+  }, [
+    debouncedSearchTerm,
+    filters.id_category,
+    filters.expiration_date,
+    pagination.page,
+    pagination.limit,
+    fetchProducts,
+  ]);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -85,13 +204,13 @@ function Products() {
   const handleDeleteConfirm = async () => {
     try {
       await productService.deleteProduct(productToDelete.id, userData?.token);
-      setProducts(products.filter((p) => p.id !== productToDelete.id));
       setSuccessMessage(
         `Produto "${productToDelete.name}" excluído com sucesso!`,
       );
       setSnackbarOpen(true);
       setDeleteDialogOpen(false);
       setProductToDelete(null);
+      fetchProducts(); // Recarregar a lista
     } catch (err) {
       setError(err.message || "Erro ao deletar produto");
       setDeleteDialogOpen(false);
@@ -101,6 +220,38 @@ function Products() {
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false);
     setProductToDelete(null);
+  };
+
+  const handleSearchChange = (event) => {
+    const newValue = event.target.value;
+    setSearchTerm(newValue);
+    // A página será resetada quando o debouncedSearchTerm mudar
+  };
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [filterName]: value,
+    }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      id_category: "",
+      expiration_date: "",
+    });
+  };
+
+  const handlePageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  };
+
+  const handleLimitChange = (event) => {
+    setPagination((prev) => ({
+      ...prev,
+      limit: parseInt(event.target.value, 10),
+      page: 1, // Resetar para primeira página
+    }));
   };
 
   const sortedProducts = [...products].sort((a, b) => {
@@ -131,19 +282,6 @@ function Products() {
     return new Date(date).toLocaleDateString("pt-BR");
   };
 
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ p: 3 }}>
       {/* Header com título e botões */}
@@ -159,7 +297,25 @@ function Products() {
           Produtos
         </Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button variant="outlined" startIcon={<FilterListIcon />} disabled>
+          <TextField
+            placeholder="Buscar produtos..."
+            size="small"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: 250 }}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            onClick={() => setFilterDrawerOpen(true)}
+          >
             Filtrar
           </Button>
           <Button variant="contained" startIcon={<AddIcon />} disabled>
@@ -227,9 +383,9 @@ function Products() {
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={orderBy === "category"}
-                  direction={orderBy === "category" ? order : "asc"}
-                  onClick={() => handleRequestSort("category")}
+                  active={orderBy === "category_name"}
+                  direction={orderBy === "category_name" ? order : "asc"}
+                  onClick={() => handleRequestSort("category_name")}
                 >
                   Categoria
                 </TableSortLabel>
@@ -238,7 +394,13 @@ function Products() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedProducts.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : sortedProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center">
                   Nenhum produto encontrado
@@ -252,7 +414,7 @@ function Products() {
                   <TableCell>{formatPrice(product.price)}</TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>{formatDate(product.expiration_date)}</TableCell>
-                  <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.category_name || "-"}</TableCell>
                   <TableCell align="center">
                     <Tooltip title="Visualizar produto">
                       <IconButton
@@ -278,8 +440,131 @@ function Products() {
             )}
           </TableBody>
         </Table>
+
+        {/* Controles de paginação */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            p: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          {/* Controle de limite de itens por página (esquerda) */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="body2">Itens por página:</Typography>
+            <Select
+              value={pagination.limit}
+              onChange={handleLimitChange}
+              size="small"
+              sx={{ minWidth: 70 }}
+            >
+              <MenuItem value={5}>5</MenuItem>
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={25}>25</MenuItem>
+              <MenuItem value={50}>50</MenuItem>
+            </Select>
+            <Typography variant="body2" sx={{ ml: 2 }}>
+              Total: {pagination.total}{" "}
+              {pagination.total === 1 ? "produto" : "produtos"}
+            </Typography>
+          </Box>
+
+          {/* Controles de navegação de página (direita) */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography variant="body2">
+              Página {pagination.page} de {pagination.totalPages || 1}
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<NavigateBeforeIcon />}
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                endIcon={<NavigateNextIcon />}
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.totalPages}
+              >
+                Próxima
+              </Button>
+            </Box>
+          </Box>
+        </Box>
       </TableContainer>
 
+      {/* Drawer de filtros */}
+      <Drawer
+        anchor="right"
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+      >
+        <Box sx={{ width: 350, p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Filtros
+          </Typography>
+          <Divider sx={{ mb: 3 }} />
+
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Filtro por categoria */}
+            <FormControl fullWidth>
+              <InputLabel>Categoria</InputLabel>
+              <Select
+                value={filters.id_category}
+                label="Categoria"
+                onChange={(e) =>
+                  handleFilterChange("id_category", e.target.value)
+                }
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Filtro por data de validade */}
+            <TextField
+              fullWidth
+              label="Data de Validade"
+              type="date"
+              value={filters.expiration_date}
+              onChange={(e) =>
+                handleFilterChange("expiration_date", e.target.value)
+              }
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+
+            {/* Botões de ação */}
+            <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+              <Button fullWidth variant="outlined" onClick={handleClearFilters}>
+                Limpar
+              </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => setFilterDrawerOpen(false)}
+              >
+                Aplicar
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Drawer>
+
+      {/* Dialog de confirmação de exclusão */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}

@@ -15,9 +15,24 @@ const createProduct = async (productData, token) => {
   }
 };
 
-const getAllProducts = async (token) => {
+const getAllProducts = async (token, queryParams = {}) => {
   try {
-    const response = await axios.get(`${API_URL}/api/products`, {
+    const params = new URLSearchParams();
+
+    if (queryParams.page) params.append("page", queryParams.page);
+    if (queryParams.limit) params.append("limit", queryParams.limit);
+    if (queryParams.search) params.append("search", queryParams.search);
+    if (queryParams.expiration_date)
+      params.append("expiration_date", queryParams.expiration_date);
+    if (queryParams.id_category)
+      params.append("id_category", queryParams.id_category);
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${API_URL}/api/products?${queryString}`
+      : `${API_URL}/api/products`;
+
+    const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
