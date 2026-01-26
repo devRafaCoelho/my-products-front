@@ -30,6 +30,8 @@ import {
   Drawer,
   Divider,
   InputAdornment,
+  Autocomplete,
+  Chip,
 } from "@mui/material";
 import {
   Visibility as VisibilityIcon,
@@ -39,6 +41,7 @@ import {
   Search as SearchIcon,
   NavigateBefore as NavigateBeforeIcon,
   NavigateNext as NavigateNextIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
@@ -69,7 +72,12 @@ function Products() {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState({
-    id_category: "",
+    id_category: [],
+    expiration_date: "",
+  });
+  // Filtros temporários (editados no drawer, aplicados ao clicar em Aplicar)
+  const [tempFilters, setTempFilters] = useState({
+    id_category: [],
     expiration_date: "",
   });
 
@@ -165,12 +173,9 @@ function Products() {
     fetchCategories();
   }, [fetchCategories]);
 
-  // Carregar produtos quando parâmetros mudarem
+  // Carregar produtos quando parâmetros mudarem (apenas busca e paginação automáticos)
   useEffect(() => {
-    const shouldResetPage =
-      debouncedSearchTerm !== "" ||
-      filters.id_category ||
-      filters.expiration_date;
+    const shouldResetPage = debouncedSearchTerm !== "";
 
     if (shouldResetPage && pagination.page !== 1) {
       setPagination((prev) => ({ ...prev, page: 1 }));
@@ -228,18 +233,33 @@ function Products() {
     // A página será resetada quando o debouncedSearchTerm mudar
   };
 
-  const handleFilterChange = (filterName, value) => {
-    setFilters((prev) => ({
+  const handleTempFilterChange = (filterName, value) => {
+    setTempFilters((prev) => ({
       ...prev,
       [filterName]: value,
     }));
   };
 
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    setFilterDrawerOpen(false);
+  };
+
   const handleClearFilters = () => {
-    setFilters({
-      id_category: "",
+    const clearedFilters = {
+      id_category: [],
       expiration_date: "",
-    });
+    };
+    setTempFilters(clearedFilters);
+    setFilters(clearedFilters);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleOpenFilterDrawer = () => {
+    // Sincroniza os filtros temporários com os aplicados
+    setTempFilters(filters);
+    setFilterDrawerOpen(true);
   };
 
   const handlePageChange = (newPage) => {
@@ -288,15 +308,23 @@ function Products() {
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", md: "center" },
           mb: 3,
+          gap: 2,
         }}
       >
-        <Typography variant="h4" component="h1">
+        <Typography variant="h4" component="h1" sx={{ mb: { xs: 0, md: 0 } }}>
           Produtos
         </Typography>
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+          }}
+        >
           <TextField
             placeholder="Buscar produtos..."
             size="small"
@@ -309,18 +337,28 @@ function Products() {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: 250 }}
+            sx={{ width: { xs: "100%", sm: 250 } }}
           />
-          <Button
-            variant="outlined"
-            startIcon={<FilterListIcon />}
-            onClick={() => setFilterDrawerOpen(true)}
-          >
-            Filtrar
-          </Button>
-          <Button variant="contained" startIcon={<AddIcon />} disabled>
-            Novo Produto
-          </Button>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<FilterListIcon />}
+              onClick={handleOpenFilterDrawer}
+              fullWidth
+              sx={{ flex: { xs: 1, sm: "none" } }}
+            >
+              Filtrar
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              disabled
+              fullWidth
+              sx={{ flex: { xs: 1, sm: "none" } }}
+            >
+              Novo Produto
+            </Button>
+          </Box>
         </Box>
       </Box>
 
@@ -416,90 +454,117 @@ function Products() {
                   <TableCell>{formatDate(product.expiration_date)}</TableCell>
                   <TableCell>{product.category_name || "-"}</TableCell>
                   <TableCell align="center">
-                    <Tooltip title="Visualizar produto">
-                      <IconButton
-                        color="primary"
-                        size="small"
-                        onClick={() => handleViewProduct(product.id)}
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Excluir produto">
-                      <IconButton
-                        color="error"
-                        size="small"
-                        onClick={() => handleDeleteClick(product)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <Box
+                      sx={{ display: "flex", gap: 1, justifyContent: "center" }}
+                    >
+                      <Tooltip title="Visualizar produto">
+                        <IconButton
+                          color="primary"
+                          size="small"
+                          onClick={() => handleViewProduct(product.id)}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Excluir produto">
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => handleDeleteClick(product)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+      </TableContainer>
 
-        {/* Controles de paginação */}
+      {/* Controles de paginação */}
+      <Paper
+        sx={{
+          borderTop: "none",
+          borderTopLeftRadius: 0,
+          borderTopRightRadius: 0,
+        }}
+      >
         <Box
           sx={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             alignItems: "center",
             p: 2,
+            gap: { xs: 1.5, sm: 3 },
+            flexWrap: "wrap",
             borderTop: "1px solid",
             borderColor: "divider",
           }}
         >
-          {/* Controle de limite de itens por página (esquerda) */}
+          {/* Controle de limite de itens por página */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="body2">Itens por página:</Typography>
+            <Typography
+              variant="body2"
+              sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
+            >
+              Linhas por página:
+            </Typography>
             <Select
               value={pagination.limit}
               onChange={handleLimitChange}
               size="small"
-              sx={{ minWidth: 70 }}
+              variant="standard"
+              sx={{
+                minWidth: 40,
+                fontSize: "0.875rem",
+                "& .MuiSelect-select": {
+                  paddingRight: "24px !important",
+                  paddingLeft: "0px",
+                },
+              }}
             >
               <MenuItem value={5}>5</MenuItem>
               <MenuItem value={10}>10</MenuItem>
               <MenuItem value={25}>25</MenuItem>
               <MenuItem value={50}>50</MenuItem>
             </Select>
-            <Typography variant="body2" sx={{ ml: 2 }}>
-              Total: {pagination.total}{" "}
-              {pagination.total === 1 ? "produto" : "produtos"}
-            </Typography>
           </Box>
 
-          {/* Controles de navegação de página (direita) */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="body2">
-              Página {pagination.page} de {pagination.totalPages || 1}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<NavigateBeforeIcon />}
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-              >
-                Anterior
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                endIcon={<NavigateNextIcon />}
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
-              >
-                Próxima
-              </Button>
-            </Box>
+          {/* Informação de intervalo de itens */}
+          <Typography
+            variant="body2"
+            sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
+          >
+            {pagination.total === 0
+              ? "0 de 0"
+              : `${(pagination.page - 1) * pagination.limit + 1}-${Math.min(
+                  pagination.page * pagination.limit,
+                  pagination.total,
+                )} de ${pagination.total}`}
+          </Typography>
+
+          {/* Controles de navegação de página */}
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page <= 1}
+            >
+              <NavigateBeforeIcon />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page >= pagination.totalPages}
+            >
+              <NavigateNextIcon />
+            </IconButton>
           </Box>
         </Box>
-      </TableContainer>
+      </Paper>
 
       {/* Drawer de filtros */}
       <Drawer
@@ -507,59 +572,101 @@ function Products() {
         open={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}
       >
-        <Box sx={{ width: 350, p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Filtros
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {/* Filtro por categoria */}
-            <FormControl fullWidth>
-              <InputLabel>Categoria</InputLabel>
-              <Select
-                value={filters.id_category}
-                label="Categoria"
-                onChange={(e) =>
-                  handleFilterChange("id_category", e.target.value)
-                }
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Filtro por data de validade */}
-            <TextField
-              fullWidth
-              label="Data de Validade"
-              type="date"
-              value={filters.expiration_date}
-              onChange={(e) =>
-                handleFilterChange("expiration_date", e.target.value)
-              }
-              InputLabelProps={{
-                shrink: true,
+        <Box
+          sx={{
+            width: 350,
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+          }}
+        >
+          <Box sx={{ p: 3, flex: 1, overflowY: "auto" }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
               }}
-            />
-
-            {/* Botões de ação */}
-            <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-              <Button fullWidth variant="outlined" onClick={handleClearFilters}>
-                Limpar
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
+            >
+              <Typography variant="h6">Filtros</Typography>
+              <IconButton
+                size="small"
                 onClick={() => setFilterDrawerOpen(false)}
               >
-                Aplicar
-              </Button>
+                <CloseIcon />
+              </IconButton>
             </Box>
+            <Divider sx={{ mb: 3 }} />
+
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {/* Filtro por categoria (múltipla seleção) */}
+              <Autocomplete
+                multiple
+                fullWidth
+                options={categories}
+                getOptionLabel={(option) => option.name}
+                value={categories.filter((cat) =>
+                  tempFilters.id_category.includes(cat.id),
+                )}
+                onChange={(event, newValue) => {
+                  handleTempFilterChange(
+                    "id_category",
+                    newValue.map((cat) => cat.id),
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Categorias"
+                    placeholder="Selecione categorias"
+                  />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option.id}
+                      label={option.name}
+                      {...getTagProps({ index })}
+                      size="small"
+                    />
+                  ))
+                }
+              />
+
+              {/* Filtro por data de validade */}
+              <TextField
+                fullWidth
+                label="Data de Validade (até)"
+                type="date"
+                value={tempFilters.expiration_date}
+                onChange={(e) =>
+                  handleTempFilterChange("expiration_date", e.target.value)
+                }
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                helperText="Produtos que vencem até esta data"
+              />
+            </Box>
+          </Box>
+
+          {/* Botões de ação no rodapé */}
+          <Box
+            sx={{
+              p: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+              display: "flex",
+              gap: 2,
+            }}
+          >
+            <Button fullWidth variant="outlined" onClick={handleClearFilters}>
+              Limpar
+            </Button>
+            <Button fullWidth variant="contained" onClick={handleApplyFilters}>
+              Aplicar
+            </Button>
           </Box>
         </Box>
       </Drawer>

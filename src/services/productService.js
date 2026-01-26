@@ -24,8 +24,16 @@ const getAllProducts = async (token, queryParams = {}) => {
     if (queryParams.search) params.append("search", queryParams.search);
     if (queryParams.expiration_date)
       params.append("expiration_date", queryParams.expiration_date);
-    if (queryParams.id_category)
-      params.append("id_category", queryParams.id_category);
+
+    // Suporta múltiplas categorias
+    if (queryParams.id_category) {
+      if (Array.isArray(queryParams.id_category)) {
+        // Envia como string separada por vírgula
+        params.append("id_category", queryParams.id_category.join(","));
+      } else {
+        params.append("id_category", queryParams.id_category);
+      }
+    }
 
     const queryString = params.toString();
     const url = queryString
