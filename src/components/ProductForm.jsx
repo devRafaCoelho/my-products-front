@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { ProductSchema } from "../schemas/ProductSchema";
@@ -17,29 +18,41 @@ import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
 import PriceInput from "./inputs/PriceInput";
 
+const emptyDefaultValues = {
+  name: "",
+  description: "",
+  price: null,
+  stock: 0,
+  expiration_date: null,
+  id_category: null,
+};
+
 export default function ProductForm({
   onSubmit,
   onCancel,
   loading = false,
   categories = [],
   error,
+  defaultValues,
+  submitLabel = "Cadastrar",
 }) {
+  const values = defaultValues ?? emptyDefaultValues;
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(ProductSchema),
     mode: "onChange",
-    defaultValues: {
-      name: "",
-      description: "",
-      price: null,
-      stock: 0,
-      expiration_date: null,
-      id_category: null,
-    },
+    defaultValues: values,
   });
+
+  useEffect(() => {
+    if (defaultValues) {
+      reset(defaultValues);
+    }
+  }, [defaultValues, reset]);
 
   const handleFormSubmit = (data) => {
     const payload = {
@@ -300,7 +313,7 @@ export default function ProductForm({
               sx={{ width: { xs: "100%", sm: "auto" }, minWidth: { sm: 140 } }}
               endIcon={loading ? <CircularProgress size={20} /> : null}
             >
-              Cadastrar
+              {submitLabel}
             </Button>
           </Box>
         </Box>

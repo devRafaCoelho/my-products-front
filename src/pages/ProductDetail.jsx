@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -14,6 +14,10 @@ import {
   Paper,
   IconButton,
   LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Snackbar,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -28,6 +32,8 @@ import {
 } from "@mui/icons-material";
 import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
+import categoryService from "../services/categoryService";
+import ProductForm from "../components/ProductForm";
 
 function ProductDetail() {
   const { id } = useParams();
@@ -36,6 +42,12 @@ function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -136,6 +148,66 @@ function ProductDetail() {
     return ratePerDay;
   };
 
+  const formDefaultValues = useMemo(
+    () =>
+      product
+        ? {
+            name: product.name,
+            description: product.description || "",
+            price: product.price,
+            stock: product.stock,
+            expiration_date: product.expiration_date
+              ? new Date(product.expiration_date)
+              : null,
+            id_category:
+              product.id_category ??
+              categories.find((c) => c.name === product.category_name)?.id ??
+              null,
+          }
+        : null,
+    [product, categories]
+  );
+
+  const handleOpenEditDialog = async () => {
+    setFormError(null);
+    setEditDialogOpen(true);
+    if (categories.length === 0 && userData?.token) {
+      try {
+        const data = await categoryService.getAllCategories(userData.token);
+        setCategories(data);
+      } catch (err) {
+        setFormError(err?.message || err?.error || "Erro ao carregar categorias");
+      }
+    }
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setFormError(null);
+  };
+
+  const handleUpdateProduct = async (data) => {
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      const updated = await productService.updateProduct(
+        id,
+        data,
+        userData?.token
+      );
+      setProduct(updated);
+      setSuccessMessage("Produto atualizado com sucesso!");
+      setSnackbarOpen(true);
+      handleCloseEditDialog();
+    } catch (err) {
+      setFormError(
+        err?.message || err?.error || "Erro ao atualizar produto"
+      );
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box
@@ -199,7 +271,7 @@ function ProductDetail() {
         <Button
           variant="contained"
           startIcon={<EditIcon />}
-          disabled
+          onClick={handleOpenEditDialog}
           sx={{ whiteSpace: "nowrap" }}
         >
           Editar Produto
@@ -430,6 +502,64 @@ function ProductDetail() {
           </Grid>
         </Grid>
       </Grid>
+
+      {/* Dialog de edição de produto */}
+      <Dialog
+        open={editDialogOpen}
+        onClose={handleCloseEditDialog}
+        maxWidth="md"
+        fullWidth
+        aria-labelledby="edit-product-dialog-title"
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: "calc(100vh - 16px)", sm: "calc(100vh - 32px)" },
+          },
+        }}
+      >
+        <DialogTitle id="edit-product-dialog-title" sx={{ pb: 0 }}>
+          Editar Produto
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            pt: 6,
+            px: { xs: 2, sm: 3 },
+            pb: 2,
+            overflowY: "auto",
+            width: "100%",
+            "& > *": { width: "100%", minWidth: 0 },
+          }}
+        >
+          {editDialogOpen && formDefaultValues && (
+            <ProductForm
+              defaultValues={formDefaultValues}
+              categories={categories}
+              onSubmit={handleUpdateProduct}
+              onCancel={handleCloseEditDialog}
+              loading={formLoading}
+              error={formError}
+              submitLabel="Atualizar"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Toast de sucesso */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity="success"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
