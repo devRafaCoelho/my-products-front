@@ -58,7 +58,7 @@ function Home() {
         // Buscar todos os produtos
         const productsResponse = await productService.getAllProducts(
           userData.token,
-          { limit: 1000 },
+          { limit: 1000 }
         );
         const products = productsResponse.data || [];
 
@@ -80,7 +80,7 @@ function Home() {
         // Valor total do estoque
         const totalValue = products.reduce(
           (sum, p) => sum + p.price * p.stock,
-          0,
+          0
         );
 
         // Contar produtos por categoria
@@ -161,7 +161,7 @@ function Home() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
@@ -174,10 +174,19 @@ function Home() {
 
       {/* Cards de Resumo */}
       <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={6} lg={3}>
+        <Grid
+          item
+          xs={12}
+          md={6}
+          lg={3}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Card
             elevation={2}
             sx={{
+              width: "100%",
               background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               color: "white",
@@ -201,10 +210,19 @@ function Home() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={6} lg={3}>
+        <Grid
+          item
+          xs={12}
+          md={6}
+          lg={3}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Card
             elevation={2}
             sx={{
+              width: "100%",
               background:
                 dashboardData.expiringProducts.length > 0
                   ? "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)"
@@ -239,10 +257,19 @@ function Home() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={6} lg={3}>
+        <Grid
+          item
+          xs={12}
+          md={6}
+          lg={3}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Card
             elevation={2}
             sx={{
+              width: "100%",
               background:
                 dashboardData.lowStockProducts.length > 0
                   ? "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)"
@@ -277,8 +304,16 @@ function Home() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={6} lg={3}>
-          <Card elevation={2} sx={{ height: "100%" }}>
+        <Grid
+          item
+          xs={12}
+          md={6}
+          lg={3}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
+          <Card elevation={2} sx={{ height: "100%", width: "100%" }}>
             {" "}
             <CardContent>
               <Box
@@ -303,7 +338,14 @@ function Home() {
       {/* Alertas e Categorias */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {/* Alertas Prioritários */}
-        <Grid item xs={12} lg={6}>
+        <Grid
+          item
+          xs={12}
+          lg={6}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Paper elevation={2} sx={{ p: 3, height: "100%" }}>
             <Typography variant="h6" gutterBottom>
               <WarningIcon
@@ -354,7 +396,9 @@ function Home() {
                           />
                         </Box>
                       }
-                      secondary={`Vence em: ${formatDate(product.expiration_date)}`}
+                      secondary={`Vence em: ${formatDate(
+                        product.expiration_date
+                      )}`}
                     />
                   </ListItem>
                 ))}
@@ -414,7 +458,14 @@ function Home() {
         </Grid>
 
         {/* Resumo por Categoria */}
-        <Grid item xs={12} lg={6}>
+        <Grid
+          item
+          xs={12}
+          lg={6}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Paper elevation={2} sx={{ p: 3, height: "100%" }}>
             <Typography variant="h6" gutterBottom>
               <CategoryIcon
@@ -470,7 +521,15 @@ function Home() {
       {/* Ações Rápidas e Produtos Recentes */}
       <Grid container spacing={3}>
         {/* Ações Rápidas */}
-        <Grid item xs={12} md={12} lg={4}>
+        <Grid
+          item
+          xs={12}
+          md={12}
+          lg={4}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Ações Rápidas
@@ -509,7 +568,15 @@ function Home() {
         </Grid>
 
         {/* Produtos Recentes */}
-        <Grid item xs={12} md={12} lg={8}>
+        <Grid
+          item
+          xs={12}
+          md={12}
+          lg={8}
+          sx={{
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Produtos Recém-Adicionados
@@ -558,7 +625,11 @@ function Home() {
                             </Box>
                           </Box>
                         }
-                        secondary={`Estoque: ${product.stock} unidades • Adicionado em: ${formatDate(product.created_at)}`}
+                        secondary={`Estoque: ${
+                          product.stock
+                        } unidades • Adicionado em: ${formatDate(
+                          product.created_at
+                        )}`}
                       />
                     </ListItem>
                     {index < dashboardData.recentProducts.length - 1 && (
