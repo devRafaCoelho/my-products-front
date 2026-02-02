@@ -46,6 +46,7 @@ import {
 import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
+import ProductForm from "../components/ProductForm";
 
 function Products() {
   const navigate = useNavigate();
@@ -65,6 +66,11 @@ function Products() {
   const [productToDelete, setProductToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  // Estados para formulário de cadastro
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState(null);
 
   // Estados para filtros e busca
   const [searchTerm, setSearchTerm] = useState("");
@@ -151,7 +157,7 @@ function Products() {
 
       const response = await productService.getAllProducts(
         userData.token,
-        queryParams,
+        queryParams
       );
 
       setProducts(response.data || []);
@@ -210,7 +216,7 @@ function Products() {
     try {
       await productService.deleteProduct(productToDelete.id, userData?.token);
       setSuccessMessage(
-        `Produto "${productToDelete.name}" excluído com sucesso!`,
+        `Produto "${productToDelete.name}" excluído com sucesso!`
       );
       setSnackbarOpen(true);
       setDeleteDialogOpen(false);
@@ -274,6 +280,32 @@ function Products() {
     }));
   };
 
+  const handleOpenCreateDialog = () => {
+    setFormError(null);
+    setCreateDialogOpen(true);
+  };
+
+  const handleCloseCreateDialog = () => {
+    setCreateDialogOpen(false);
+    setFormError(null);
+  };
+
+  const handleCreateProduct = async (data) => {
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      await productService.createProduct(data, userData?.token);
+      setSuccessMessage("Produto cadastrado com sucesso!");
+      setSnackbarOpen(true);
+      handleCloseCreateDialog();
+      fetchProducts();
+    } catch (err) {
+      setFormError(err?.message || err?.error || "Erro ao cadastrar produto");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   const sortedProducts = [...products].sort((a, b) => {
     const aValue = a[orderBy];
     const bValue = b[orderBy];
@@ -303,7 +335,15 @@ function Products() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box
+      sx={{
+        height: "calc(100vh - 64px)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        p: 3,
+      }}
+    >
       {/* Header com título e botões */}
       <Box
         sx={{
@@ -313,6 +353,7 @@ function Products() {
           alignItems: { xs: "stretch", md: "center" },
           mb: 3,
           gap: 2,
+          flexShrink: 0,
         }}
       >
         <Typography variant="h4" component="h1" sx={{ mb: { xs: 0, md: 0 } }}>
@@ -367,7 +408,7 @@ function Products() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              disabled
+              onClick={handleOpenCreateDialog}
               sx={{
                 whiteSpace: "nowrap",
                 flex: { xs: 1, sm: "none" },
@@ -381,207 +422,259 @@ function Products() {
 
       {/* Mensagem de erro */}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2, flexShrink: 0 }}>
           {error}
         </Alert>
       )}
 
-      {/* Tabela de produtos */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "name"}
-                  direction={orderBy === "name" ? order : "asc"}
-                  onClick={() => handleRequestSort("name")}
-                >
-                  Nome
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "description"}
-                  direction={orderBy === "description" ? order : "asc"}
-                  onClick={() => handleRequestSort("description")}
-                >
-                  Descrição
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "price"}
-                  direction={orderBy === "price" ? order : "asc"}
-                  onClick={() => handleRequestSort("price")}
-                >
-                  Preço
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "stock"}
-                  direction={orderBy === "stock" ? order : "asc"}
-                  onClick={() => handleRequestSort("stock")}
-                >
-                  Estoque
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "expiration_date"}
-                  direction={orderBy === "expiration_date" ? order : "asc"}
-                  onClick={() => handleRequestSort("expiration_date")}
-                >
-                  Data de Validade
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "category_name"}
-                  direction={orderBy === "category_name" ? order : "asc"}
-                  onClick={() => handleRequestSort("category_name")}
-                >
-                  Categoria
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center"></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : sortedProducts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  Nenhum produto encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              sortedProducts.map((product) => (
-                <TableRow key={product.id} hover>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.description}</TableCell>
-                  <TableCell>{formatPrice(product.price)}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>{formatDate(product.expiration_date)}</TableCell>
-                  <TableCell>{product.category_name || "-"}</TableCell>
-                  <TableCell align="center">
-                    <Box
-                      sx={{ display: "flex", gap: 1, justifyContent: "center" }}
-                    >
-                      <Tooltip title="Visualizar produto">
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => handleViewProduct(product.id)}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Excluir produto">
-                        <IconButton
-                          // color="error"
-                          size="small"
-                          onClick={() => handleDeleteClick(product)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Controles de paginação */}
-      <Paper
+      {/* Área da tabela com scroll interno */}
+      <Box
         sx={{
-          borderTop: "none",
-          borderTopLeftRadius: 0,
-          borderTopRightRadius: 0,
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
       >
-        <Box
+        <TableContainer
+          component={Paper}
           sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            p: 2,
-            gap: { xs: 1.5, sm: 3 },
-            flexWrap: "wrap",
-            borderTop: "1px solid",
-            borderColor: "divider",
+            flex: 1,
+            overflow: "auto",
+            display: "block",
           }}
         >
-          {/* Controle de limite de itens por página */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Table
+            stickyHeader
+            sx={{ "& .MuiTableCell-root": { whiteSpace: "nowrap" } }}
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === "name"}
+                    direction={orderBy === "name" ? order : "asc"}
+                    onClick={() => handleRequestSort("name")}
+                  >
+                    Nome
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === "description"}
+                    direction={orderBy === "description" ? order : "asc"}
+                    onClick={() => handleRequestSort("description")}
+                  >
+                    Descrição
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === "price"}
+                    direction={orderBy === "price" ? order : "asc"}
+                    onClick={() => handleRequestSort("price")}
+                  >
+                    Preço
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === "stock"}
+                    direction={orderBy === "stock" ? order : "asc"}
+                    onClick={() => handleRequestSort("stock")}
+                  >
+                    Estoque
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === "expiration_date"}
+                    direction={orderBy === "expiration_date" ? order : "asc"}
+                    onClick={() => handleRequestSort("expiration_date")}
+                  >
+                    Data de Validade
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === "category_name"}
+                    direction={orderBy === "category_name" ? order : "asc"}
+                    onClick={() => handleRequestSort("category_name")}
+                  >
+                    Categoria
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell align="center"></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow
+                  sx={{
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.04)"
+                        : "rgba(0, 0, 0, 0.04)",
+                  }}
+                >
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : sortedProducts.length === 0 ? (
+                <TableRow
+                  sx={{
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.04)"
+                        : "rgba(0, 0, 0, 0.04)",
+                  }}
+                >
+                  <TableCell colSpan={7} align="center">
+                    Nenhum produto encontrado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                sortedProducts.map((product, index) => (
+                  <TableRow
+                    key={product.id}
+                    hover
+                    sx={{
+                      backgroundColor:
+                        index % 2 === 0
+                          ? (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(255, 255, 255, 0.04)"
+                                : "rgba(0, 0, 0, 0.04)"
+                          : undefined,
+                    }}
+                  >
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell>{product.description}</TableCell>
+                    <TableCell>{formatPrice(product.price)}</TableCell>
+                    <TableCell>{product.stock}</TableCell>
+                    <TableCell>{formatDate(product.expiration_date)}</TableCell>
+                    <TableCell>{product.category_name || "-"}</TableCell>
+                    <TableCell align="center">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Tooltip title="Visualizar produto">
+                          <IconButton
+                            color="primary"
+                            size="small"
+                            onClick={() => handleViewProduct(product.id)}
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir produto">
+                          <IconButton
+                            // color="error"
+                            size="small"
+                            onClick={() => handleDeleteClick(product)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Controles de paginação - footer fixo */}
+        <Paper
+          sx={{
+            flexShrink: 0,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              p: 2,
+              gap: { xs: 1.5, sm: 3 },
+              flexWrap: "wrap",
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            {/* Controle de limite de itens por página */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
+              >
+                Linhas por página:
+              </Typography>
+              <Select
+                value={pagination.limit}
+                onChange={handleLimitChange}
+                size="small"
+                variant="standard"
+                sx={{
+                  minWidth: 40,
+                  fontSize: "0.875rem",
+                  "& .MuiSelect-select": {
+                    paddingRight: "24px !important",
+                    paddingLeft: "0px",
+                  },
+                }}
+              >
+                <MenuItem value={5}>5</MenuItem>
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={25}>25</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+              </Select>
+            </Box>
+
+            {/* Informação de intervalo de itens */}
             <Typography
               variant="body2"
               sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
             >
-              Linhas por página:
+              {pagination.total === 0
+                ? "0 de 0"
+                : `${(pagination.page - 1) * pagination.limit + 1}-${Math.min(
+                    pagination.page * pagination.limit,
+                    pagination.total
+                  )} de ${pagination.total}`}
             </Typography>
-            <Select
-              value={pagination.limit}
-              onChange={handleLimitChange}
-              size="small"
-              variant="standard"
-              sx={{
-                minWidth: 40,
-                fontSize: "0.875rem",
-                "& .MuiSelect-select": {
-                  paddingRight: "24px !important",
-                  paddingLeft: "0px",
-                },
-              }}
-            >
-              <MenuItem value={5}>5</MenuItem>
-              <MenuItem value={10}>10</MenuItem>
-              <MenuItem value={25}>25</MenuItem>
-              <MenuItem value={50}>50</MenuItem>
-            </Select>
-          </Box>
 
-          {/* Informação de intervalo de itens */}
-          <Typography
-            variant="body2"
-            sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
-          >
-            {pagination.total === 0
-              ? "0 de 0"
-              : `${(pagination.page - 1) * pagination.limit + 1}-${Math.min(
-                  pagination.page * pagination.limit,
-                  pagination.total,
-                )} de ${pagination.total}`}
-          </Typography>
-
-          {/* Controles de navegação de página */}
-          <Box sx={{ display: "flex", gap: 0.5 }}>
-            <IconButton
-              size="small"
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page <= 1}
-            >
-              <NavigateBeforeIcon />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page >= pagination.totalPages}
-            >
-              <NavigateNextIcon />
-            </IconButton>
+            {/* Controles de navegação de página */}
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+              >
+                <NavigateBeforeIcon />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.totalPages}
+              >
+                <NavigateNextIcon />
+              </IconButton>
+            </Box>
           </Box>
-        </Box>
-      </Paper>
+        </Paper>
+      </Box>
 
       {/* Drawer de filtros */}
       <Drawer
@@ -624,12 +717,12 @@ function Products() {
                 options={categories}
                 getOptionLabel={(option) => option.name}
                 value={categories.filter((cat) =>
-                  tempFilters.id_category.includes(cat.id),
+                  tempFilters.id_category.includes(cat.id)
                 )}
                 onChange={(event, newValue) => {
                   handleTempFilterChange(
                     "id_category",
-                    newValue.map((cat) => cat.id),
+                    newValue.map((cat) => cat.id)
                   );
                 }}
                 renderInput={(params) => (
@@ -687,6 +780,45 @@ function Products() {
           </Box>
         </Box>
       </Drawer>
+
+      {/* Dialog de cadastro de produto */}
+      <Dialog
+        open={createDialogOpen}
+        onClose={handleCloseCreateDialog}
+        maxWidth="md"
+        fullWidth
+        aria-labelledby="create-product-dialog-title"
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: "calc(100vh - 16px)", sm: "calc(100vh - 32px)" },
+          },
+        }}
+      >
+        <DialogTitle id="create-product-dialog-title" sx={{ pb: 0 }}>
+          Novo Produto
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            pt: 2,
+            px: { xs: 2, sm: 3 },
+            pb: 2,
+            overflowY: "auto",
+            width: "100%",
+            "& > *": { width: "100%", minWidth: 0 },
+          }}
+        >
+          {createDialogOpen && (
+            <ProductForm
+              onSubmit={handleCreateProduct}
+              onCancel={handleCloseCreateDialog}
+              loading={formLoading}
+              categories={categories}
+              error={formError}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de confirmação de exclusão */}
       <Dialog
