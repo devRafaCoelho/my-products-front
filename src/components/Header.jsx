@@ -121,7 +121,11 @@ function Header() {
             <Box
               sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}
             >
-              <Typography variant="h6" fontWeight={700} color="primary">
+              <Typography
+                variant="h6"
+                fontWeight={theme.typography.fontWeightBold}
+                color="primary"
+              >
                 Estoque Inteligente
               </Typography>
             </Box>
@@ -135,7 +139,7 @@ function Header() {
           <>
             <Typography
               variant="h6"
-              fontWeight={700}
+              fontWeight={theme.typography.fontWeightBold}
               color="primary"
               sx={{ mr: 4 }}
             >

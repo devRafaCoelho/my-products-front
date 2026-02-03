@@ -26,9 +26,14 @@ export function ThemeProvider({ children }) {
       createTheme({
         palette: {
           mode: mode,
+          background: {
+            autofill: mode === "dark" ? "#2d2d2d" : "#e3f2fd",
+          },
         },
         typography: {
           fontFamily: "Nunito",
+          fontWeightSemiBold: 600,
+          fontWeightBold: 700,
         },
       }),
     [mode],

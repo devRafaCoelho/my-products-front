@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Paper,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
   AttachMoney as MoneyIcon,
@@ -36,9 +37,17 @@ const MONTH_NAMES_PT = [
   "Dez",
 ];
 
+const CHART_HEIGHT_XS = 320;
+const CHART_HEIGHT_SM = 420;
+const CHART_HEIGHT_MD = 480;
+
 function Finance() {
   const { userData } = useContext(AppContext);
   const theme = useTheme();
+  const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
+  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
+  const chartHeight =
+    isMdUp ? CHART_HEIGHT_MD : isSmUp ? CHART_HEIGHT_SM : CHART_HEIGHT_XS;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [products, setProducts] = useState([]);
@@ -286,8 +295,8 @@ function Finance() {
               width: { xs: "100%" },
               minWidth: 0,
               height: "100%",
-              background: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-              color: "white",
+              background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+              color: theme.palette.success.contrastText,
             }}
           >
             <CardContent>
@@ -372,7 +381,7 @@ function Finance() {
             width: "100%",
             minWidth: 0,
             maxWidth: "100%",
-            height: 320,
+            height: chartHeight,
             overflow: "hidden",
           }}
         >
@@ -381,7 +390,9 @@ function Finance() {
               {
                 scaleType: "band",
                 data: chartData.map((d) => d.month),
-                tickLabelStyle: { fontSize: 12 },
+                tickLabelStyle: {
+                  fontSize: theme.typography.caption.fontSize,
+                },
                 tickLabelPlacement: "middle",
               },
             ]}
@@ -393,7 +404,7 @@ function Finance() {
               },
             ]}
             width={Math.max(chartWidth, 300)}
-            height={320}
+            height={chartHeight}
             margin={{ top: 24, right: 24, bottom: 36, left: 56 }}
             borderRadius={6}
             slotProps={{

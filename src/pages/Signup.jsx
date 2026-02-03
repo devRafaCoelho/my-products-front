@@ -97,7 +97,7 @@ function Signup() {
         justifyContent: "center",
         background: isMobile
           ? theme.palette.background.default
-          : `linear-gradient(90deg, #42a5f5 50%, ${theme.palette.background.default} 50%)`,
+          : `linear-gradient(90deg, ${theme.palette.primary.light} 50%, ${theme.palette.background.default} 50%)`,
       }}
     >
       <Paper
@@ -114,8 +114,8 @@ function Signup() {
           <Box
             sx={{
               flex: 1,
-              background: "#42a5f5",
-              color: "#fff",
+              background: theme.palette.primary.light,
+              color: theme.palette.primary.contrastText,
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
@@ -123,7 +123,11 @@ function Signup() {
               p: 4,
             }}
           >
-            <Typography variant="h4" fontWeight={700} gutterBottom>
+            <Typography
+              variant="h4"
+              fontWeight={theme.typography.fontWeightBold}
+              gutterBottom
+            >
               Estoque Inteligente
             </Typography>
             <Typography variant="h6" sx={{ opacity: 0.95 }}>
@@ -134,15 +138,15 @@ function Signup() {
         {isMobile && (
           <Box
             sx={{
-              background: "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)",
-              color: "#fff",
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+              color: theme.palette.primary.contrastText,
               py: 6,
               px: 4,
             }}
           >
             <Typography
               variant="h4"
-              fontWeight={700}
+              fontWeight={theme.typography.fontWeightBold}
               gutterBottom
               align="center"
             >
@@ -169,7 +173,12 @@ function Signup() {
             position: "relative",
           }}
         >
-          <Typography variant="h6" fontWeight={600} align="center" mb={2}>
+          <Typography
+            variant="h6"
+            fontWeight={theme.typography.fontWeightSemiBold}
+            align="center"
+            mb={2}
+          >
             Crie sua conta
           </Typography>
           <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
@@ -194,11 +203,7 @@ function Signup() {
                       helperText={errors.firstName?.message}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${
-                            theme.palette.mode === "dark"
-                              ? "#2d2d2d"
-                              : "#e3f2fd"
-                          } inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.autofill} inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -217,11 +222,7 @@ function Signup() {
                       helperText={errors.lastName?.message}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${
-                            theme.palette.mode === "dark"
-                              ? "#2d2d2d"
-                              : "#e3f2fd"
-                          } inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.autofill} inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -245,11 +246,7 @@ function Signup() {
                       helperText={errors.email?.message}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${
-                            theme.palette.mode === "dark"
-                              ? "#2d2d2d"
-                              : "#e3f2fd"
-                          } inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.autofill} inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -321,11 +318,7 @@ function Signup() {
                       }}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${
-                            theme.palette.mode === "dark"
-                              ? "#2d2d2d"
-                              : "#e3f2fd"
-                          } inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.autofill} inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -391,7 +384,7 @@ function Signup() {
               onClick={() => navigate("/login")}
               sx={{
                 cursor: "pointer",
-                fontWeight: 600,
+                fontWeight: theme.typography.fontWeightSemiBold,
                 textDecoration: "none",
                 "&:hover": {
                   textDecoration: "underline",

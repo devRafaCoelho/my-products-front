@@ -19,6 +19,7 @@ import {
   Drawer,
   IconButton,
   Snackbar,
+  useTheme,
 } from "@mui/material";
 import {
   Inventory as InventoryIcon,
@@ -39,6 +40,7 @@ import ProductForm from "../components/ProductForm";
 function Home() {
   const navigate = useNavigate();
   const { userData } = useContext(AppContext);
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState({
@@ -272,9 +274,9 @@ function Home() {
               width: "100%",
               background:
                 dashboardData.expiringProducts.length > 0
-                  ? "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)"
-                  : "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-              color: "white",
+                  ? `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`
+                  : `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+              color: theme.palette.common.white,
               height: "100%",
               cursor:
                 dashboardData.expiringProducts.length > 0
@@ -319,9 +321,9 @@ function Home() {
               width: "100%",
               background:
                 dashboardData.lowStockProducts.length > 0
-                  ? "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)"
-                  : "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-              color: "white",
+                  ? `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`
+                  : `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+              color: theme.palette.common.white,
               height: "100%",
               cursor:
                 dashboardData.lowStockProducts.length > 0

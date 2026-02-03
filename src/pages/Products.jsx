@@ -644,10 +644,7 @@ function Products() {
                 {loading ? (
                   <TableRow
                     sx={{
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "rgba(255, 255, 255, 0.04)"
-                          : "rgba(0, 0, 0, 0.04)",
+                      backgroundColor: (t) => t.palette.action.hover,
                     }}
                   >
                     <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
@@ -657,10 +654,7 @@ function Products() {
                 ) : sortedProducts.length === 0 ? (
                   <TableRow
                     sx={{
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "rgba(255, 255, 255, 0.04)"
-                          : "rgba(0, 0, 0, 0.04)",
+                      backgroundColor: (t) => t.palette.action.hover,
                     }}
                   >
                     <TableCell colSpan={7} align="center">
@@ -675,10 +669,7 @@ function Products() {
                       sx={{
                         backgroundColor:
                           index % 2 === 0
-                            ? (theme) =>
-                                theme.palette.mode === "dark"
-                                  ? "rgba(255, 255, 255, 0.04)"
-                                  : "rgba(0, 0, 0, 0.04)"
+                            ? (t) => t.palette.action.hover
                             : undefined,
                       }}
                     >
@@ -918,7 +909,10 @@ function Products() {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography
                   variant="body2"
-                  sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
+                  sx={{
+                    whiteSpace: "nowrap",
+                    fontSize: theme.typography.body2.fontSize,
+                  }}
                 >
                   Linhas por página:
                 </Typography>
@@ -929,7 +923,7 @@ function Products() {
                   variant="standard"
                   sx={{
                     minWidth: 40,
-                    fontSize: "0.875rem",
+                    fontSize: theme.typography.body2.fontSize,
                     "& .MuiSelect-select": {
                       paddingRight: "24px !important",
                       paddingLeft: "0px",
@@ -946,7 +940,10 @@ function Products() {
               {/* Informação de intervalo de itens */}
               <Typography
                 variant="body2"
-                sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
+                sx={{
+                  whiteSpace: "nowrap",
+                  fontSize: theme.typography.body2.fontSize,
+                }}
               >
                 {pagination.total === 0
                   ? "0 de 0"
