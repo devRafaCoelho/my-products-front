@@ -130,8 +130,8 @@ function Signup() {
             >
               Estoque Inteligente
             </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.95 }}>
-              Cadastre seus dados em minutos
+            <Typography variant="subtitle1" sx={{ opacity: 0.95 }}>
+              Cadastre seus dados em minutos!
             </Typography>
           </Box>
         )}
@@ -152,7 +152,7 @@ function Signup() {
             >
               Estoque Inteligente
             </Typography>
-            <Typography variant="body1" align="center" sx={{ opacity: 0.95 }}>
+            <Typography variant="subtitle1" align="center" sx={{ opacity: 0.95 }}>
               Cadastre seus dados em minutos!
             </Typography>
           </Box>

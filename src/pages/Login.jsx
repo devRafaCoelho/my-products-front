@@ -103,11 +103,10 @@ function Login() {
               fontWeight={theme.typography.fontWeightBold}
               gutterBottom
             >
-              Bem-vindo de volta!
+              Estoque Inteligente
             </Typography>
-            <Typography variant="body1">
-              Gerencie seu estoque doméstico com praticidade e organize os
-              produtos da sua casa.
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              Gerencie seu estoque doméstico com praticidade
             </Typography>
           </Box>
         )}
@@ -129,7 +128,7 @@ function Login() {
               Estoque Inteligente
             </Typography>
 
-            <Typography variant="body2" align="center" sx={{ opacity: 0.9 }}>
+            <Typography variant="body1" align="center" sx={{ opacity: 0.9 }}>
               Gerencie seu estoque doméstico com praticidade
             </Typography>
           </Box>
