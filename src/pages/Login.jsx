@@ -124,9 +124,7 @@ function Login() {
             >
               Estoque Inteligente
             </Typography>
-            <Typography variant="body1" align="center" sx={{ mb: 1 }}>
-              Acesse sua conta
-            </Typography>
+
             <Typography variant="body2" align="center" sx={{ opacity: 0.9 }}>
               Gerencie seu estoque doméstico com praticidade
             </Typography>
@@ -165,7 +163,9 @@ function Login() {
                     helperText={errors.email?.message}
                     sx={{
                       "& input:-webkit-autofill": {
-                        WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                        WebkitBoxShadow: `0 0 0 100px ${
+                          theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"
+                        } inset`,
                         WebkitTextFillColor: theme.palette.text.primary,
                       },
                     }}
@@ -187,7 +187,9 @@ function Login() {
                       endAdornment: (
                         <InputAdornment position="end">
                           <IconButton
-                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            aria-label={
+                              showPassword ? "Ocultar senha" : "Mostrar senha"
+                            }
                             onClick={() => setShowPassword((p) => !p)}
                             edge="end"
                           >
@@ -198,7 +200,9 @@ function Login() {
                     }}
                     sx={{
                       "& input:-webkit-autofill": {
-                        WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                        WebkitBoxShadow: `0 0 0 100px ${
+                          theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"
+                        } inset`,
                         WebkitTextFillColor: theme.palette.text.primary,
                       },
                     }}

@@ -345,7 +345,11 @@ function Products() {
   };
 
   const handleLoadMoreList = async () => {
-    if (!userData?.token || listPage >= pagination.totalPages || loadMoreLoading)
+    if (
+      !userData?.token ||
+      listPage >= pagination.totalPages ||
+      loadMoreLoading
+    )
       return;
     setLoadMoreLoading(true);
     try {
@@ -724,7 +728,6 @@ function Products() {
             sx={{
               flex: 1,
               overflow: "auto",
-              p: 1,
             }}
           >
             {loading ? (
@@ -749,138 +752,140 @@ function Products() {
               </Typography>
             ) : (
               <>
-              {sortedListProducts.map((product) => (
-                <Accordion
-                  key={product.id}
-                  expanded={expandedId === product.id}
-                  onChange={() =>
-                    setExpandedId((prev) =>
-                      prev === product.id ? null : product.id
-                    )
-                  }
-                  sx={{
-                    "&:before": { display: "none" },
-                    boxShadow: "none",
-                    border: "1px solid",
-                    borderColor: "divider",
-                    mb: 1,
-                    "&.Mui-expanded": { my: 1 },
-                  }}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
+                {sortedListProducts.map((product) => (
+                  <Accordion
+                    key={product.id}
+                    expanded={expandedId === product.id}
+                    onChange={() =>
+                      setExpandedId((prev) =>
+                        prev === product.id ? null : product.id
+                      )
+                    }
                     sx={{
-                      flexDirection: "row-reverse",
-                      "& .MuiAccordionSummary-expandIconWrapper": {
-                        marginRight: 1,
-                        marginLeft: 0,
-                      },
-                      "& .MuiAccordionSummary-content": {
-                        alignItems: "center",
-                        gap: 1,
-                        flexWrap: "wrap",
-                        marginLeft: 0,
-                      },
+                      "&:before": { display: "none" },
+                      boxShadow: "none",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      mb: 1,
+                      "&.Mui-expanded": { my: 1 },
                     }}
                   >
-                    <Typography
-                      variant="body1"
-                      fontWeight="medium"
-                      sx={{ flex: 1, minWidth: 0 }}
-                    >
-                      {product.name}
-                    </Typography>
-                    <Box
-                      sx={{ display: "flex", gap: 0.5 }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Tooltip title="Visualizar produto">
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => handleViewProduct(product.id)}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Excluir produto">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteClick(product)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ pt: 0 }}>
-                    <Box
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
                       sx={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(180px, 1fr))",
-                        gap: 2,
-                        typography: "body2",
+                        flexDirection: "row-reverse",
+                        "& .MuiAccordionSummary-expandIconWrapper": {
+                          marginRight: 1,
+                          marginLeft: 0,
+                        },
+                        "& .MuiAccordionSummary-content": {
+                          alignItems: "center",
+                          gap: 1,
+                          flexWrap: "wrap",
+                          marginLeft: 0,
+                        },
                       }}
                     >
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Descrição
-                        </Typography>
-                        <Typography variant="body2">
-                          {product.description || "-"}
-                        </Typography>
+                      <Typography
+                        variant="body1"
+                        fontWeight="medium"
+                        sx={{ flex: 1, minWidth: 0 }}
+                      >
+                        {product.name}
+                      </Typography>
+                      <Box
+                        sx={{ display: "flex", gap: 0.5 }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Tooltip title="Visualizar produto">
+                          <IconButton
+                            color="primary"
+                            size="small"
+                            onClick={() => handleViewProduct(product.id)}
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir produto">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeleteClick(product)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Preço
-                        </Typography>
-                        <Typography variant="body2">
-                          {formatPrice(product.price)}
-                        </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ pt: 0 }}>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(180px, 1fr))",
+                          gap: 2,
+                          typography: "body2",
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Descrição
+                          </Typography>
+                          <Typography variant="body2">
+                            {product.description || "-"}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Preço
+                          </Typography>
+                          <Typography variant="body2">
+                            {formatPrice(product.price)}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Estoque
+                          </Typography>
+                          <Typography variant="body2">
+                            {product.stock}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Data de Validade
+                          </Typography>
+                          <Typography variant="body2">
+                            {formatDate(product.expiration_date)}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Categoria
+                          </Typography>
+                          <Typography variant="body2">
+                            {product.category_name || "-"}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Estoque
-                        </Typography>
-                        <Typography variant="body2">{product.stock}</Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Data de Validade
-                        </Typography>
-                        <Typography variant="body2">
-                          {formatDate(product.expiration_date)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Categoria
-                        </Typography>
-                        <Typography variant="body2">
-                          {product.category_name || "-"}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-              {listPage < pagination.totalPages && (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={handleLoadMoreList}
-                    disabled={loadMoreLoading}
-                    endIcon={
-                      loadMoreLoading ? (
-                        <CircularProgress size={20} />
-                      ) : null
-                    }
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+                {listPage < pagination.totalPages && (
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", py: 2 }}
                   >
-                    Mostrar mais
-                  </Button>
-                </Box>
-              )}
+                    <Button
+                      variant="outlined"
+                      onClick={handleLoadMoreList}
+                      disabled={loadMoreLoading}
+                      endIcon={
+                        loadMoreLoading ? <CircularProgress size={20} /> : null
+                      }
+                    >
+                      Mostrar mais
+                    </Button>
+                  </Box>
+                )}
               </>
             )}
           </Box>
@@ -888,88 +893,88 @@ function Products() {
 
         {/* Controles de paginação - footer fixo (apenas modo tabela) */}
         {viewMode === "table" && (
-        <Paper
-          sx={{
-            flexShrink: 0,
-            borderTop: "1px solid",
-            borderColor: "divider",
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-          }}
-        >
-          <Box
+          <Paper
             sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              p: 2,
-              gap: { xs: 1.5, sm: 3 },
-              flexWrap: "wrap",
+              flexShrink: 0,
               borderTop: "1px solid",
               borderColor: "divider",
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
             }}
           >
-            {/* Controle de limite de itens por página */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                p: 2,
+                gap: { xs: 1.5, sm: 3 },
+                flexWrap: "wrap",
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              {/* Controle de limite de itens por página */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
+                >
+                  Linhas por página:
+                </Typography>
+                <Select
+                  value={pagination.limit}
+                  onChange={handleLimitChange}
+                  size="small"
+                  variant="standard"
+                  sx={{
+                    minWidth: 40,
+                    fontSize: "0.875rem",
+                    "& .MuiSelect-select": {
+                      paddingRight: "24px !important",
+                      paddingLeft: "0px",
+                    },
+                  }}
+                >
+                  <MenuItem value={5}>5</MenuItem>
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={25}>25</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                </Select>
+              </Box>
+
+              {/* Informação de intervalo de itens */}
               <Typography
                 variant="body2"
                 sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
               >
-                Linhas por página:
+                {pagination.total === 0
+                  ? "0 de 0"
+                  : `${(pagination.page - 1) * pagination.limit + 1}-${Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total
+                    )} de ${pagination.total}`}
               </Typography>
-              <Select
-                value={pagination.limit}
-                onChange={handleLimitChange}
-                size="small"
-                variant="standard"
-                sx={{
-                  minWidth: 40,
-                  fontSize: "0.875rem",
-                  "& .MuiSelect-select": {
-                    paddingRight: "24px !important",
-                    paddingLeft: "0px",
-                  },
-                }}
-              >
-                <MenuItem value={5}>5</MenuItem>
-                <MenuItem value={10}>10</MenuItem>
-                <MenuItem value={25}>25</MenuItem>
-                <MenuItem value={50}>50</MenuItem>
-              </Select>
-            </Box>
 
-            {/* Informação de intervalo de itens */}
-            <Typography
-              variant="body2"
-              sx={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
-            >
-              {pagination.total === 0
-                ? "0 de 0"
-                : `${(pagination.page - 1) * pagination.limit + 1}-${Math.min(
-                    pagination.page * pagination.limit,
-                    pagination.total
-                  )} de ${pagination.total}`}
-            </Typography>
-
-            {/* Controles de navegação de página */}
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <IconButton
-                size="small"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-              >
-                <NavigateBeforeIcon />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
-              >
-                <NavigateNextIcon />
-              </IconButton>
+              {/* Controles de navegação de página */}
+              <Box sx={{ display: "flex", gap: 0.5 }}>
+                <IconButton
+                  size="small"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                >
+                  <NavigateBeforeIcon />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  <NavigateNextIcon />
+                </IconButton>
+              </Box>
             </Box>
-          </Box>
-        </Paper>
+          </Paper>
         )}
       </Box>
 

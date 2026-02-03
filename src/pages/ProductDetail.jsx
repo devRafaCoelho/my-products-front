@@ -175,7 +175,9 @@ function ProductDetail() {
         const data = await categoryService.getAllCategories(userData.token);
         setCategories(data);
       } catch (err) {
-        setFormError(err?.message || err?.error || "Erro ao carregar categorias");
+        setFormError(
+          err?.message || err?.error || "Erro ao carregar categorias"
+        );
       }
     }
   };
@@ -199,9 +201,7 @@ function ProductDetail() {
       setSnackbarOpen(true);
       handleCloseEditDrawer();
     } catch (err) {
-      setFormError(
-        err?.message || err?.error || "Erro ao atualizar produto"
-      );
+      setFormError(err?.message || err?.error || "Erro ao atualizar produto");
     } finally {
       setFormLoading(false);
     }
@@ -243,7 +243,7 @@ function ProductDetail() {
   const stockStatus = getStockStatus(product.stock);
   const consumptionRate = getConsumptionRate(
     product.stock,
-    daysUntilExpiration,
+    daysUntilExpiration
   );
 
   return (
@@ -306,8 +306,8 @@ function ProductDetail() {
                 {product.stock === 0
                   ? "Produto esgotado. Considere reabastecer."
                   : product.stock <= 10
-                    ? "Quantidade em estoque próxima do fim."
-                    : "Quantidade em estoque adequada."}
+                  ? "Quantidade em estoque próxima do fim."
+                  : "Quantidade em estoque adequada."}
               </Typography>
             </Alert>
           </Grid>
@@ -333,8 +333,8 @@ function ProductDetail() {
                 {consumptionRate < 1
                   ? "Consumo baixo necessário. Estoque durará até o vencimento."
                   : consumptionRate > 5
-                    ? "Atenção: consumo elevado necessário para evitar desperdício."
-                    : "Taxa de consumo moderada."}
+                  ? "Atenção: consumo elevado necessário para evitar desperdício."
+                  : "Taxa de consumo moderada."}
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
@@ -346,14 +346,14 @@ function ProductDetail() {
                   variant="determinate"
                   value={Math.max(
                     0,
-                    Math.min(100, ((365 - daysUntilExpiration) / 365) * 100),
+                    Math.min(100, ((365 - daysUntilExpiration) / 365) * 100)
                   )}
                   color={
                     daysUntilExpiration < 7
                       ? "error"
                       : daysUntilExpiration < 30
-                        ? "warning"
-                        : "success"
+                      ? "warning"
+                      : "success"
                   }
                   sx={{ height: 10, borderRadius: 5 }}
                 />
@@ -443,7 +443,7 @@ function ProductDetail() {
 
         <Grid item xs={12} md={12} lg={4}>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{ width: { xs: "100%", sm: "auto" } }}>
               <Card
                 elevation={2}
                 sx={{
@@ -473,7 +473,7 @@ function ProductDetail() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{ width: { xs: "100%", sm: "auto" } }}>
               <Card elevation={2}>
                 <CardContent>
                   <Box

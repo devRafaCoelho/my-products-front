@@ -17,7 +17,10 @@ import {
   CircularProgress,
   Alert,
   Link,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import CpfInput from "../components/inputs/CpfInput";
 import PhoneInput from "../components/inputs/PhoneInput";
 import { useTheme } from "@mui/material/styles";
@@ -32,6 +35,7 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -122,12 +126,8 @@ function Signup() {
             <Typography variant="h4" fontWeight={700} gutterBottom>
               Estoque Inteligente
             </Typography>
-            <Typography variant="h6" gutterBottom>
-              Controle os produtos da sua casa
-            </Typography>
-            <Typography variant="body1">
-              Cadastre-se para gerenciar o estoque doméstico e tenha mais
-              praticidade no dia a dia.
+            <Typography variant="h6" sx={{ opacity: 0.95 }}>
+              Cadastre seus dados em minutos
             </Typography>
           </Box>
         )}
@@ -136,7 +136,7 @@ function Signup() {
             sx={{
               background: "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)",
               color: "#fff",
-              py: 8,
+              py: 6,
               px: 4,
             }}
           >
@@ -148,18 +148,16 @@ function Signup() {
             >
               Estoque Inteligente
             </Typography>
-            <Typography variant="body1" align="center" sx={{ mb: 1 }}>
-              Controle os produtos da sua casa
-            </Typography>
-            <Typography variant="body2" align="center" sx={{ opacity: 0.9 }}>
-              Cadastre-se e comece a gerenciar seu estoque doméstico
+            <Typography variant="body1" align="center" sx={{ opacity: 0.95 }}>
+              Cadastre seus dados em minutos!
             </Typography>
           </Box>
         )}
         <Box
           sx={{
             flex: 1,
-            p: isMobile ? 3 : 6,
+            p: isMobile ? 3 : 4,
+            pt: isMobile ? 2 : 3,
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -171,8 +169,8 @@ function Signup() {
             position: "relative",
           }}
         >
-          <Typography variant="h5" fontWeight={600} mb={2} align="center">
-            Cadastre seus dados em minutos!
+          <Typography variant="h6" fontWeight={600} align="center" mb={2}>
+            Crie sua conta
           </Typography>
           <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
             {steps.map((label) => (
@@ -196,7 +194,11 @@ function Signup() {
                       helperText={errors.firstName?.message}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${
+                            theme.palette.mode === "dark"
+                              ? "#2d2d2d"
+                              : "#e3f2fd"
+                          } inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -215,7 +217,11 @@ function Signup() {
                       helperText={errors.lastName?.message}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${
+                            theme.palette.mode === "dark"
+                              ? "#2d2d2d"
+                              : "#e3f2fd"
+                          } inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -239,7 +245,11 @@ function Signup() {
                       helperText={errors.email?.message}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${
+                            theme.palette.mode === "dark"
+                              ? "#2d2d2d"
+                              : "#e3f2fd"
+                          } inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -283,15 +293,39 @@ function Signup() {
                     <TextField
                       {...field}
                       label="Senha"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       fullWidth
                       error={!!errors.password && touchedFields.password}
                       helperText={
                         touchedFields.password ? errors.password?.message : ""
                       }
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={
+                                showPassword ? "Ocultar senha" : "Mostrar senha"
+                              }
+                              onClick={() => setShowPassword((prev) => !prev)}
+                              onMouseDown={(e) => e.preventDefault()}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                       sx={{
                         "& input:-webkit-autofill": {
-                          WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
+                          WebkitBoxShadow: `0 0 0 100px ${
+                            theme.palette.mode === "dark"
+                              ? "#2d2d2d"
+                              : "#e3f2fd"
+                          } inset`,
                           WebkitTextFillColor: theme.palette.text.primary,
                         },
                       }}
@@ -352,20 +386,20 @@ function Signup() {
               Já tem uma conta?
             </Typography>
             <Link
-                component="button"
-                variant="body2"
-                onClick={() => navigate("/login")}
-                sx={{
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  "&:hover": {
-                    textDecoration: "underline",
-                  },
-                }}
-              >
-                Faça login
-              </Link>
+              component="button"
+              variant="body2"
+              onClick={() => navigate("/login")}
+              sx={{
+                cursor: "pointer",
+                fontWeight: 600,
+                textDecoration: "none",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              Faça login
+            </Link>
           </Box>
         </Box>
       </Paper>
