@@ -14,9 +14,7 @@ import {
   Paper,
   IconButton,
   LinearProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
+  Drawer,
   Snackbar,
 } from "@mui/material";
 import {
@@ -29,6 +27,7 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   TrendingDown as TrendingDownIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
@@ -42,7 +41,7 @@ function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
@@ -168,9 +167,9 @@ function ProductDetail() {
     [product, categories]
   );
 
-  const handleOpenEditDialog = async () => {
+  const handleOpenEditDrawer = async () => {
     setFormError(null);
-    setEditDialogOpen(true);
+    setEditDrawerOpen(true);
     if (categories.length === 0 && userData?.token) {
       try {
         const data = await categoryService.getAllCategories(userData.token);
@@ -181,8 +180,8 @@ function ProductDetail() {
     }
   };
 
-  const handleCloseEditDialog = () => {
-    setEditDialogOpen(false);
+  const handleCloseEditDrawer = () => {
+    setEditDrawerOpen(false);
     setFormError(null);
   };
 
@@ -198,7 +197,7 @@ function ProductDetail() {
       setProduct(updated);
       setSuccessMessage("Produto atualizado com sucesso!");
       setSnackbarOpen(true);
-      handleCloseEditDialog();
+      handleCloseEditDrawer();
     } catch (err) {
       setFormError(
         err?.message || err?.error || "Erro ao atualizar produto"
@@ -271,7 +270,7 @@ function ProductDetail() {
         <Button
           variant="contained"
           startIcon={<EditIcon />}
-          onClick={handleOpenEditDialog}
+          onClick={handleOpenEditDrawer}
           sx={{ whiteSpace: "nowrap" }}
         >
           Editar Produto
@@ -373,7 +372,7 @@ function ProductDetail() {
 
       {/* Informações do Produto */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={12} lg={8}>
           <Paper elevation={2} sx={{ p: 3, height: "100%" }}>
             <Typography variant="h6" gutterBottom>
               Detalhes do Produto
@@ -442,7 +441,7 @@ function ProductDetail() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={12} lg={4}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Card
@@ -503,46 +502,54 @@ function ProductDetail() {
         </Grid>
       </Grid>
 
-      {/* Dialog de edição de produto */}
-      <Dialog
-        open={editDialogOpen}
-        onClose={handleCloseEditDialog}
-        maxWidth="md"
-        fullWidth
-        aria-labelledby="edit-product-dialog-title"
-        PaperProps={{
-          sx: {
-            m: { xs: 1, sm: 2 },
-            maxHeight: { xs: "calc(100vh - 16px)", sm: "calc(100vh - 32px)" },
-          },
-        }}
+      {/* Drawer de edição de produto */}
+      <Drawer
+        anchor="right"
+        open={editDrawerOpen}
+        onClose={handleCloseEditDrawer}
       >
-        <DialogTitle id="edit-product-dialog-title" sx={{ pb: 0 }}>
-          Editar Produto
-        </DialogTitle>
-        <DialogContent
+        <Box
           sx={{
-            pt: 6,
-            px: { xs: 2, sm: 3 },
-            pb: 2,
-            overflowY: "auto",
-            width: "100%",
-            "& > *": { width: "100%", minWidth: 0 },
+            width: { xs: "100%", sm: 420 },
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
           }}
         >
-          {editDialogOpen && formDefaultValues && (
-            <ProductForm
-              defaultValues={formDefaultValues}
-              categories={categories}
-              onSubmit={handleUpdateProduct}
-              onCancel={handleCloseEditDialog}
-              loading={formLoading}
-              error={formError}
-              submitLabel="Atualizar"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+          <Box
+            sx={{
+              p: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="h6">Editar Produto</Typography>
+            <IconButton
+              size="small"
+              onClick={handleCloseEditDrawer}
+              aria-label="Fechar"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+            {editDrawerOpen && formDefaultValues && (
+              <ProductForm
+                defaultValues={formDefaultValues}
+                categories={categories}
+                onSubmit={handleUpdateProduct}
+                onCancel={handleCloseEditDrawer}
+                loading={formLoading}
+                error={formError}
+                submitLabel="Atualizar"
+              />
+            )}
+          </Box>
+        </Box>
+      </Drawer>
 
       {/* Toast de sucesso */}
       <Snackbar

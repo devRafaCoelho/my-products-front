@@ -16,7 +16,10 @@ import {
   Snackbar,
   CircularProgress,
   Grid,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PhoneInput from "../components/inputs/PhoneInput";
 
 function Account() {
@@ -28,6 +31,9 @@ function Account() {
   const [passwordError, setPasswordError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const profileDefaultValues = {
     firstName: userData?.firstname ?? userData?.firstName ?? "",
@@ -327,12 +333,35 @@ function Account() {
                         <TextField
                           {...field}
                           label="Senha atual"
-                          type="password"
+                          type={showCurrentPassword ? "text" : "password"}
                           fullWidth
                           variant="outlined"
                           autoComplete="current-password"
                           error={!!passwordErrors.password}
                           helperText={passwordErrors.password?.message}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  aria-label={
+                                    showCurrentPassword
+                                      ? "Ocultar senha"
+                                      : "Mostrar senha"
+                                  }
+                                  onClick={() =>
+                                    setShowCurrentPassword((p) => !p)
+                                  }
+                                  edge="end"
+                                >
+                                  {showCurrentPassword ? (
+                                    <VisibilityOff />
+                                  ) : (
+                                    <Visibility />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
                       )}
                     />
@@ -356,12 +385,35 @@ function Account() {
                         <TextField
                           {...field}
                           label="Nova senha"
-                          type="password"
+                          type={showNewPassword ? "text" : "password"}
                           fullWidth
                           variant="outlined"
                           autoComplete="new-password"
                           error={!!passwordErrors.newPassword}
                           helperText={passwordErrors.newPassword?.message}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  aria-label={
+                                    showNewPassword
+                                      ? "Ocultar senha"
+                                      : "Mostrar senha"
+                                  }
+                                  onClick={() =>
+                                    setShowNewPassword((p) => !p)
+                                  }
+                                  edge="end"
+                                >
+                                  {showNewPassword ? (
+                                    <VisibilityOff />
+                                  ) : (
+                                    <Visibility />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
                       )}
                     />
@@ -385,7 +437,7 @@ function Account() {
                         <TextField
                           {...field}
                           label="Confirmar nova senha"
-                          type="password"
+                          type={showConfirmPassword ? "text" : "password"}
                           fullWidth
                           variant="outlined"
                           autoComplete="new-password"
@@ -393,6 +445,29 @@ function Account() {
                           helperText={
                             passwordErrors.confirmNewPassword?.message
                           }
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  aria-label={
+                                    showConfirmPassword
+                                      ? "Ocultar senha"
+                                      : "Mostrar senha"
+                                  }
+                                  onClick={() =>
+                                    setShowConfirmPassword((p) => !p)
+                                  }
+                                  edge="end"
+                                >
+                                  {showConfirmPassword ? (
+                                    <VisibilityOff />
+                                  ) : (
+                                    <Visibility />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
                       )}
                     />

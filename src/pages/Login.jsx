@@ -11,12 +11,15 @@ import {
   Button,
   Typography,
   TextField,
+  InputAdornment,
+  IconButton,
   useMediaQuery,
   Paper,
   CircularProgress,
   Alert,
   Link,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 
 function Login() {
@@ -26,6 +29,7 @@ function Login() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -97,9 +101,6 @@ function Login() {
             <Typography variant="h4" fontWeight={700} gutterBottom>
               Bem-vindo de volta!
             </Typography>
-            <Typography variant="h6" gutterBottom>
-              Acesse sua conta
-            </Typography>
             <Typography variant="body1">
               Gerencie seu estoque doméstico com praticidade e organize os
               produtos da sua casa.
@@ -147,7 +148,7 @@ function Login() {
           }}
         >
           <Typography variant="h5" fontWeight={600} mb={4} align="center">
-            Login
+            Acesse sua conta
           </Typography>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -178,10 +179,23 @@ function Login() {
                   <TextField
                     {...field}
                     label="Senha"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     fullWidth
                     error={!!errors.password}
                     helperText={errors.password?.message}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            onClick={() => setShowPassword((p) => !p)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                     sx={{
                       "& input:-webkit-autofill": {
                         WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === "dark" ? "#2d2d2d" : "#e3f2fd"} inset`,
@@ -213,27 +227,31 @@ function Login() {
               mt: 4,
               pt: 3,
               borderTop: `1px solid ${theme.palette.divider}`,
-              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+              flexWrap: "wrap",
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              Não tem uma conta?{" "}
-              <Link
-                component="button"
-                variant="body2"
-                onClick={() => navigate("/signup")}
-                sx={{
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  "&:hover": {
-                    textDecoration: "underline",
-                  },
-                }}
-              >
-                Cadastre-se
-              </Link>
+              Não tem uma conta?
             </Typography>
+            <Link
+              component="button"
+              variant="body2"
+              onClick={() => navigate("/signup")}
+              sx={{
+                cursor: "pointer",
+                fontWeight: 600,
+                textDecoration: "none",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              Cadastre-se
+            </Link>
           </Box>
         </Box>
       </Paper>

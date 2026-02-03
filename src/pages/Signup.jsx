@@ -172,7 +172,7 @@ function Signup() {
           }}
         >
           <Typography variant="h5" fontWeight={600} mb={2} align="center">
-            Cadastro de Usuário
+            Cadastre seus dados em minutos!
           </Typography>
           <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
             {steps.map((label) => (
@@ -341,12 +341,17 @@ function Signup() {
               mt: 4,
               pt: 3,
               borderTop: `1px solid ${theme.palette.divider}`,
-              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+              flexWrap: "wrap",
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              Já tem uma conta?{" "}
-              <Link
+              Já tem uma conta?
+            </Typography>
+            <Link
                 component="button"
                 variant="body2"
                 onClick={() => navigate("/login")}
@@ -361,7 +366,6 @@ function Signup() {
               >
                 Faça login
               </Link>
-            </Typography>
           </Box>
         </Box>
       </Paper>

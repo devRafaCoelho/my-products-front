@@ -8,6 +8,7 @@ import {
   Alert,
   CircularProgress,
   Paper,
+  useTheme,
 } from "@mui/material";
 import {
   AttachMoney as MoneyIcon,
@@ -37,6 +38,7 @@ const MONTH_NAMES_PT = [
 
 function Finance() {
   const { userData } = useContext(AppContext);
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [products, setProducts] = useState([]);
@@ -387,16 +389,23 @@ function Finance() {
               {
                 data: chartData.map((d) => d.value),
                 label: "Valor",
-                color: "primary.main",
+                color: theme.palette.primary.main,
               },
             ]}
             width={Math.max(chartWidth, 300)}
             height={320}
-            margin={{ top: 20, right: 16, bottom: 30, left: 50 }}
+            margin={{ top: 24, right: 24, bottom: 36, left: 56 }}
+            borderRadius={6}
             slotProps={{
               legend: { hidden: true },
               tooltip: {
                 valueFormatter: (value) => formatPrice(value),
+              },
+            }}
+            sx={{
+              "& .MuiChartsAxis-tick": { fill: theme.palette.text.secondary },
+              "& .MuiChartsAxis-line": {
+                stroke: theme.palette.divider,
               },
             }}
           />

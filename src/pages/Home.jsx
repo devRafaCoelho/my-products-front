@@ -16,6 +16,9 @@ import {
   ListItemText,
   Divider,
   LinearProgress,
+  Drawer,
+  IconButton,
+  Snackbar,
 } from "@mui/material";
 import {
   Inventory as InventoryIcon,
@@ -26,9 +29,12 @@ import {
   Category as CategoryIcon,
   CalendarMonth as CalendarIcon,
   ShoppingCart as ShoppingCartIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
+import categoryService from "../services/categoryService";
+import ProductForm from "../components/ProductForm";
 
 function Home() {
   const navigate = useNavigate();
@@ -43,6 +49,13 @@ function Home() {
     categories: [],
     recentProducts: [],
   });
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [dashboardRefresh, setDashboardRefresh] = useState(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -114,7 +127,41 @@ function Home() {
     };
 
     fetchDashboardData();
-  }, [userData?.token]);
+  }, [userData?.token, dashboardRefresh]);
+
+  const handleOpenCreateDrawer = async () => {
+    setCreateDrawerOpen(true);
+    setFormError(null);
+    if (!userData?.token) return;
+    try {
+      const list = await categoryService.getAllCategories(userData.token);
+      setCategories(Array.isArray(list) ? list : []);
+    } catch {
+      setCategories([]);
+    }
+  };
+
+  const handleCloseCreateDrawer = () => {
+    setCreateDrawerOpen(false);
+    setFormError(null);
+  };
+
+  const handleCreateProduct = async (data) => {
+    if (!userData?.token) return;
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      await productService.createProduct(data, userData.token);
+      handleCloseCreateDrawer();
+      setSuccessMessage("Produto cadastrado com sucesso!");
+      setSnackbarOpen(true);
+      setDashboardRefresh((r) => r + 1);
+    } catch (err) {
+      setFormError(err?.message || "Erro ao cadastrar produto");
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -540,7 +587,7 @@ function Home() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 fullWidth
-                disabled
+                onClick={handleOpenCreateDrawer}
               >
                 Cadastrar Novo Produto
               </Button>
@@ -642,6 +689,69 @@ function Home() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Drawer Novo Produto */}
+      <Drawer
+        anchor="right"
+        open={createDrawerOpen}
+        onClose={handleCloseCreateDrawer}
+      >
+        <Box
+          sx={{
+            width: { xs: "100%", sm: 420 },
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+          }}
+        >
+          <Box
+            sx={{
+              p: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="h6">Novo Produto</Typography>
+            <IconButton
+              size="small"
+              onClick={handleCloseCreateDrawer}
+              aria-label="Fechar"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+            {createDrawerOpen && (
+              <ProductForm
+                onSubmit={handleCreateProduct}
+                onCancel={handleCloseCreateDrawer}
+                loading={formLoading}
+                categories={categories}
+                error={formError}
+              />
+            )}
+          </Box>
+        </Box>
+      </Drawer>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity="success"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
