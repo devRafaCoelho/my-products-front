@@ -70,9 +70,10 @@ function Login() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: isMobile
-          ? theme.palette.background.default
-          : `linear-gradient(90deg, ${theme.palette.primary.light} 50%, ${theme.palette.background.default} 50%)`,
+        background:
+          theme.palette.mode === "dark"
+            ? `linear-gradient(90deg, ${theme.palette.primary.main} 50%, ${theme.palette.background.default} 50%)`
+            : `linear-gradient(90deg, ${theme.palette.primary.light} 50%, ${theme.palette.background.default} 50%)`,
       }}
     >
       <Paper
@@ -89,7 +90,10 @@ function Login() {
           <Box
             sx={{
               flex: 1,
-              background: theme.palette.primary.light,
+              background:
+                theme.palette.mode === "dark"
+                  ? theme.palette.primary.main
+                  : theme.palette.primary.light,
               color: theme.palette.primary.contrastText,
               display: "flex",
               flexDirection: "column",
