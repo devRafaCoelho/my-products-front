@@ -36,6 +36,7 @@ import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
 import ProductForm from "../components/ProductForm";
+import NewProductMenu from "../components/NewProductMenu";
 
 function Home() {
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ function Home() {
   const [successMessage, setSuccessMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [dashboardRefresh, setDashboardRefresh] = useState(0);
+  const [anchorElNewProduct, setAnchorElNewProduct] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -148,6 +150,22 @@ function Home() {
     setFormError(null);
   };
 
+  const handleOpenNewProductMenu = (event) => {
+    setAnchorElNewProduct(event.currentTarget);
+  };
+
+  const handleCloseNewProductMenu = () => {
+    setAnchorElNewProduct(null);
+  };
+
+  const handleManualCreate = async () => {
+    await handleOpenCreateDrawer();
+  };
+
+  const handleScanReceipt = () => {
+    // Sem ação por enquanto
+  };
+
   const handleCreateProduct = async (data) => {
     if (!userData?.token) return;
     setFormLoading(true);
@@ -223,61 +241,50 @@ function Home() {
 
       {/* Cards de Resumo */}
       <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4 }}>
-        <Grid
-          item
-          xs={12}
-          md={6}
-          lg={3}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
+        <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             elevation={2}
             sx={{
-              width: "100%",
+              color: theme.palette.common.white,
+              height: "100%",
               background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              color: "white",
-              height: "100%",
             }}
           >
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
+            <CardContent
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <InventoryIcon fontSize="large" />
                 <Typography variant="overline">Total de Produtos</Typography>
               </Box>
-              <Typography variant="h3" fontWeight="bold">
-                {dashboardData.totalProducts}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                itens cadastrados
-              </Typography>
+              <Box>
+                <Typography variant="h3" fontWeight="bold">
+                  {dashboardData.totalProducts}
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  itens cadastrados
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          md={6}
-          lg={3}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
+        <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             elevation={2}
             sx={{
-              width: "100%",
+              color: theme.palette.common.white,
+              height: "100%",
               background:
                 dashboardData.expiringProducts.length > 0
                   ? `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`
                   : `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-              color: theme.palette.common.white,
-              height: "100%",
               cursor:
                 dashboardData.expiringProducts.length > 0
                   ? "pointer"
@@ -287,44 +294,42 @@ function Home() {
               dashboardData.expiringProducts.length > 0 && navigate("/products")
             }
           >
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
+            <CardContent
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <WarningIcon fontSize="large" />
                 <Typography variant="overline">Vencendo em 7 dias</Typography>
               </Box>
-              <Typography variant="h3" fontWeight="bold">
-                {dashboardData.expiringProducts.length}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                {dashboardData.expiringProducts.length === 0
-                  ? "Nenhum produto vencendo"
-                  : "produtos precisam de atenção"}
-              </Typography>
+              <Box>
+                <Typography variant="h3" fontWeight="bold">
+                  {dashboardData.expiringProducts.length}
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  {dashboardData.expiringProducts.length === 0
+                    ? "Nenhum produto vencendo"
+                    : "produtos precisam de atenção"}
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          md={6}
-          lg={3}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
+        <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             elevation={2}
             sx={{
-              width: "100%",
+              color: theme.palette.common.white,
+              height: "100%",
               background:
                 dashboardData.lowStockProducts.length > 0
                   ? `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`
                   : `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-              color: theme.palette.common.white,
-              height: "100%",
               cursor:
                 dashboardData.lowStockProducts.length > 0
                   ? "pointer"
@@ -334,45 +339,49 @@ function Home() {
               dashboardData.lowStockProducts.length > 0 && navigate("/products")
             }
           >
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
+            <CardContent
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <TrendingDownIcon fontSize="large" />
                 <Typography variant="overline">Estoque Baixo</Typography>
               </Box>
-              <Typography variant="h3" fontWeight="bold">
-                {dashboardData.lowStockProducts.length}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                {dashboardData.lowStockProducts.length === 0
-                  ? "Todos com estoque adequado"
-                  : "produtos com pouco estoque"}
-              </Typography>
+              <Box>
+                <Typography variant="h3" fontWeight="bold">
+                  {dashboardData.lowStockProducts.length}
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  {dashboardData.lowStockProducts.length === 0
+                    ? "Todos com estoque adequado"
+                    : "produtos com pouco estoque"}
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          md={6}
-          lg={3}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
-          <Card elevation={2} sx={{ height: "100%", width: "100%" }}>
-            {" "}
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
+        <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card elevation={2} sx={{ height: "100%" }}>
+            <CardContent
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <MoneyIcon color="primary" fontSize="large" />
                 <Typography variant="overline" color="text.secondary">
                   Valor Total
                 </Typography>
               </Box>
+
               <Typography variant="h4" fontWeight="bold" color="primary">
                 {formatPrice(dashboardData.totalValue)}
               </Typography>
@@ -387,14 +396,7 @@ function Home() {
       {/* Alertas e Categorias */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {/* Alertas Prioritários */}
-        <Grid
-          item
-          xs={12}
-          lg={6}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
+        <Grid item size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 3, height: "100%" }}>
             <Typography variant="h6" gutterBottom>
               <WarningIcon
@@ -507,14 +509,7 @@ function Home() {
         </Grid>
 
         {/* Resumo por Categoria */}
-        <Grid
-          item
-          xs={12}
-          lg={6}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
+        <Grid item size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 3, height: "100%" }}>
             <Typography variant="h6" gutterBottom>
               <CategoryIcon
@@ -570,15 +565,7 @@ function Home() {
       {/* Ações Rápidas e Produtos Recentes */}
       <Grid container spacing={3}>
         {/* Ações Rápidas */}
-        <Grid
-          item
-          xs={12}
-          md={12}
-          lg={4}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
+        <Grid item size={{ xs: 12, md: 4 }}>
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Ações Rápidas
@@ -589,7 +576,7 @@ function Home() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 fullWidth
-                onClick={handleOpenCreateDrawer}
+                onClick={handleOpenNewProductMenu}
               >
                 Cadastrar Novo Produto
               </Button>
@@ -613,19 +600,26 @@ function Home() {
                 </Button>
               )}
             </Box>
+            {/* Menu de opções para Novo Produto */}
+            <NewProductMenu
+              anchorEl={anchorElNewProduct}
+              onClose={handleCloseNewProductMenu}
+              onManualCreate={handleManualCreate}
+              onScanReceipt={handleScanReceipt}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "left",
+              }}
+            />
           </Paper>
         </Grid>
 
         {/* Produtos Recentes */}
-        <Grid
-          item
-          xs={12}
-          md={12}
-          lg={8}
-          sx={{
-            width: { xs: "100%", md: "auto" },
-          }}
-        >
+        <Grid item size={{ xs: 12, md: 8 }}>
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Produtos Recém-Adicionados

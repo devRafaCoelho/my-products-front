@@ -55,6 +55,7 @@ import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
 import ProductForm from "../components/ProductForm";
+import NewProductMenu from "../components/NewProductMenu";
 
 function Products() {
   const navigate = useNavigate();
@@ -104,6 +105,7 @@ function Products() {
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [anchorElNewProduct, setAnchorElNewProduct] = useState(null);
 
   // Estados para filtros e busca
   const [searchTerm, setSearchTerm] = useState("");
@@ -328,6 +330,18 @@ function Products() {
     setFormError(null);
   };
 
+  const handleOpenNewProductMenu = (event) => {
+    setAnchorElNewProduct(event.currentTarget);
+  };
+
+  const handleCloseNewProductMenu = () => {
+    setAnchorElNewProduct(null);
+  };
+
+  const handleScanReceipt = () => {
+    // Sem ação por enquanto
+  };
+
   const handleCreateProduct = async (data) => {
     setFormLoading(true);
     setFormError(null);
@@ -487,7 +501,7 @@ function Products() {
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={handleOpenCreateDrawer}
+                onClick={handleOpenNewProductMenu}
                 sx={{
                   whiteSpace: "nowrap",
                   flex: { xs: 1, sm: "none" },
@@ -498,6 +512,14 @@ function Products() {
             </Box>
           </Box>
         </Box>
+
+        {/* Menu de opções para Novo Produto */}
+        <NewProductMenu
+          anchorEl={anchorElNewProduct}
+          onClose={handleCloseNewProductMenu}
+          onManualCreate={handleOpenCreateDrawer}
+          onScanReceipt={handleScanReceipt}
+        />
 
         {/* Modo tabela / lista: só em md ou menor, só ícones, sempre à direita */}
         <Box
