@@ -37,6 +37,8 @@ import productService from "../services/productService";
 import categoryService from "../services/categoryService";
 import ProductForm from "../components/ProductForm";
 import NewProductMenu from "../components/NewProductMenu";
+import ReceiptScanner from "../components/ReceiptScanner";
+import ReceiptProductsReview from "../components/ReceiptProductsReview";
 
 function Home() {
   const navigate = useNavigate();
@@ -60,6 +62,12 @@ function Home() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [dashboardRefresh, setDashboardRefresh] = useState(0);
   const [anchorElNewProduct, setAnchorElNewProduct] = useState(null);
+  
+  // Estados para escaneamento de nota fiscal
+  const [receiptScannerOpen, setReceiptScannerOpen] = useState(false);
+  const [receiptReviewOpen, setReceiptReviewOpen] = useState(false);
+  const [extractedProducts, setExtractedProducts] = useState([]);
+  const [batchLoading, setBatchLoading] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -163,7 +171,37 @@ function Home() {
   };
 
   const handleScanReceipt = () => {
-    // Sem ação por enquanto
+    setReceiptScannerOpen(true);
+  };
+
+  const handleProductsExtracted = (products) => {
+    setExtractedProducts(products);
+    setReceiptReviewOpen(true);
+  };
+
+  const handleBatchCreate = async (products) => {
+    if (!userData?.token) return;
+    
+    setBatchLoading(true);
+    setFormError(null);
+    
+    try {
+      await productService.createProductsBatch(products, userData.token);
+      setSuccessMessage(
+        `${products.length} produto${products.length !== 1 ? "s" : ""} cadastrado${products.length !== 1 ? "s" : ""} com sucesso!`
+      );
+      setSnackbarOpen(true);
+      setReceiptReviewOpen(false);
+      setReceiptScannerOpen(false);
+      setExtractedProducts([]);
+      setDashboardRefresh((prev) => prev + 1);
+    } catch (err) {
+      setFormError(
+        err?.message || err?.error || "Erro ao cadastrar produtos"
+      );
+    } finally {
+      setBatchLoading(false);
+    }
   };
 
   const handleCreateProduct = async (data) => {
@@ -732,6 +770,27 @@ function Home() {
           </Box>
         </Box>
       </Drawer>
+
+      {/* Scanner de Nota Fiscal */}
+      <ReceiptScanner
+        open={receiptScannerOpen}
+        onClose={() => setReceiptScannerOpen(false)}
+        onProductsExtracted={handleProductsExtracted}
+      />
+
+      {/* Revisão de Produtos Extraídos */}
+      <ReceiptProductsReview
+        open={receiptReviewOpen}
+        onClose={() => {
+          setReceiptReviewOpen(false);
+          setExtractedProducts([]);
+        }}
+        products={extractedProducts}
+        categories={categories}
+        onSubmit={handleBatchCreate}
+        loading={batchLoading}
+        error={formError}
+      />
 
       <Snackbar
         open={snackbarOpen}

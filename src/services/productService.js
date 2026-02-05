@@ -15,6 +15,23 @@ const createProduct = async (productData, token) => {
   }
 };
 
+const createProductsBatch = async (productsArray, token) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/products`,
+      productsArray,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Erro ao criar produtos" };
+  }
+};
+
 const getAllProducts = async (token, queryParams = {}) => {
   try {
     const params = new URLSearchParams();
@@ -92,6 +109,7 @@ const deleteProduct = async (id, token) => {
 
 export default {
   createProduct,
+  createProductsBatch,
   getAllProducts,
   getProductById,
   updateProduct,
