@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Box,
   Button,
@@ -43,28 +43,47 @@ function ReceiptProductsReview({
   loading = false,
   error,
 }) {
-  const [products, setProducts] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editForm, setEditForm] = useState({});
 
-  useEffect(() => {
-    if (initialProducts && initialProducts.length > 0) {
-      // Converte category (nome) para id_category se necessário
-      const mappedProducts = initialProducts.map((product) => {
-        const categoryObj = categories.find(
-          (cat) => cat.name?.toLowerCase() === product.category?.toLowerCase()
-        );
-        return {
-          ...product,
-          id_category: categoryObj?.id || null,
-          expiration_date: product.expiration_date
-            ? dayjs(product.expiration_date)
-            : null,
-        };
-      });
-      setProducts(mappedProducts);
+  // Usa useMemo para calcular os produtos mapeados diretamente
+  const mappedProducts = useMemo(() => {
+    if (!initialProducts || initialProducts.length === 0) {
+      return [];
     }
+    
+    return initialProducts.map((product) => {
+      const categoryObj = categories.find(
+        (cat) => cat.name?.toLowerCase() === product.category?.toLowerCase()
+      );
+      return {
+        ...product,
+        id_category: categoryObj?.id || null,
+        expiration_date: product.expiration_date
+          ? dayjs(product.expiration_date)
+          : null,
+      };
+    });
   }, [initialProducts, categories]);
+
+  // Estado local para edição (inicializado com os produtos mapeados)
+  const [products, setProducts] = useState(() => mappedProducts);
+
+  // Usa useRef para rastrear a última versão dos produtos mapeados
+  const prevMappedProductsRef = useRef(mappedProducts);
+
+  // Sincroniza o estado quando mappedProducts mudar usando useLayoutEffect para evitar flicker
+  // e usando uma verificação para evitar atualizações desnecessárias
+  useEffect(() => {
+    // Compara referências para evitar atualizações desnecessárias
+    if (prevMappedProductsRef.current !== mappedProducts) {
+      prevMappedProductsRef.current = mappedProducts;
+      // Usa requestAnimationFrame para evitar chamada síncrona de setState
+      requestAnimationFrame(() => {
+        setProducts(mappedProducts);
+      });
+    }
+  }, [mappedProducts]);
 
   const handleEdit = (index) => {
     setEditingIndex(index);
@@ -112,25 +131,19 @@ function ReceiptProductsReview({
       if (product.expiration_date) {
         // Se for um objeto dayjs, converte para string
         if (product.expiration_date.format) {
-          formatted.expiration_date = product.expiration_date.format("YYYY-MM-DD");
+          formatted.expiration_date =
+            product.expiration_date.format("YYYY-MM-DD");
         } else if (typeof product.expiration_date === "string") {
           formatted.expiration_date = product.expiration_date;
         } else if (product.expiration_date instanceof Date) {
-          formatted.expiration_date = product.expiration_date.toISOString().split("T")[0];
+          formatted.expiration_date = product.expiration_date
+            .toISOString()
+            .split("T")[0];
         }
       }
 
-      // Adiciona id_category apenas se existir e for válido
-      if (product.id_category) {
-        // Converte para número se for string
-        const categoryId = typeof product.id_category === "string" 
-          ? parseInt(product.id_category, 10) 
-          : product.id_category;
-        
-        if (!isNaN(categoryId) && categoryId > 0) {
-          formatted.id_category = categoryId;
-        }
-      }
+      // Não inclui id_category ao cadastrar produtos através do escaneamento
+      // O id_category será definido pelo backend ou pode ser editado manualmente depois
 
       return formatted;
     });
@@ -138,7 +151,9 @@ function ReceiptProductsReview({
     console.log("Produtos formatados para envio:", {
       quantidade: formattedProducts.length,
       primeiroProduto: formattedProducts[0],
-      formato: Array.isArray(formattedProducts) ? "array" : typeof formattedProducts,
+      formato: Array.isArray(formattedProducts)
+        ? "array"
+        : typeof formattedProducts,
     });
 
     onSubmit(formattedProducts);
@@ -162,7 +177,7 @@ function ReceiptProductsReview({
           }}
         >
           <Typography variant="h6">
-            Revisar Produtos Extraídos ({products.length})
+            Revisar produtos extraídos ({products.length})
           </Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
@@ -178,17 +193,30 @@ function ReceiptProductsReview({
               Nenhum produto encontrado na nota fiscal.
             </Typography>
           ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{
+                maxHeight: "60vh",
+                overflow: "auto",
+              }}
+            >
+              <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell>Nome</TableCell>
                     <TableCell>Descrição</TableCell>
-                    <TableCell align="right">Preço</TableCell>
-                    <TableCell align="right">Estoque</TableCell>
+                    <TableCell>Preço</TableCell>
+                    <TableCell>Estoque</TableCell>
                     <TableCell>Validade</TableCell>
                     <TableCell>Categoria</TableCell>
-                    <TableCell align="center">Ações</TableCell>
+                    <TableCell
+                      sx={{
+                        minWidth: 100,
+                      }}
+                    >
+                      Ações
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -286,20 +314,44 @@ function ReceiptProductsReview({
                               )}
                             />
                           </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleSaveEdit(index)}
+                          <TableCell
+                            sx={{
+                              whiteSpace: "nowrap",
+                              width: "100px",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                flexWrap: "nowrap",
+                              }}
                             >
-                              <SaveIcon />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={handleCancelEdit}
-                            >
-                              <CancelIcon />
-                            </IconButton>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleSaveEdit(index)}
+                                sx={{
+                                  flexShrink: 0,
+                                  minWidth: "auto",
+                                  padding: 0.5,
+                                }}
+                              >
+                                <SaveIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={handleCancelEdit}
+                                sx={{
+                                  flexShrink: 0,
+                                  minWidth: "auto",
+                                  padding: 0.5,
+                                }}
+                              >
+                                <CancelIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
                           </TableCell>
                         </>
                       ) : (
@@ -315,10 +367,8 @@ function ReceiptProductsReview({
                               </Typography>
                             )}
                           </TableCell>
-                          <TableCell align="right">
-                            {formatPrice(product.price)}
-                          </TableCell>
-                          <TableCell align="right">{product.stock}</TableCell>
+                          <TableCell>{formatPrice(product.price)}</TableCell>
+                          <TableCell>{product.stock}</TableCell>
                           <TableCell>
                             {product.expiration_date
                               ? dayjs(product.expiration_date).format(
@@ -337,21 +387,45 @@ function ReceiptProductsReview({
                               />
                             )}
                           </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleEdit(index)}
+                          <TableCell
+                            sx={{
+                              whiteSpace: "nowrap",
+                              width: "100px",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                flexWrap: "nowrap",
+                              }}
                             >
-                              <EditIcon />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleDelete(index)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleEdit(index)}
+                                sx={{
+                                  flexShrink: 0,
+                                  minWidth: "auto",
+                                  padding: 0.5,
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleDelete(index)}
+                                sx={{
+                                  flexShrink: 0,
+                                  minWidth: "auto",
+                                  padding: 0.5,
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
                           </TableCell>
                         </>
                       )}
