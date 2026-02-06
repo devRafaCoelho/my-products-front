@@ -99,14 +99,47 @@ function ReceiptProductsReview({
 
   const handleSubmit = () => {
     // Converte os produtos para o formato esperado pela API
-    const formattedProducts = products.map((product) => ({
-      name: product.name,
-      description: product.description || "",
-      price: parseFloat(product.price) || 0,
-      stock: parseInt(product.stock, 10) || 0,
-      expiration_date: product.expiration_date || null,
-      id_category: product.id_category || null,
-    }));
+    const formattedProducts = products.map((product) => {
+      // Garante que todos os campos estão no formato correto
+      const formatted = {
+        name: String(product.name || "").trim(),
+        description: String(product.description || "").trim(),
+        price: parseFloat(product.price) || 0,
+        stock: parseInt(product.stock, 10) || 0,
+      };
+
+      // Adiciona expiration_date apenas se existir e for válido
+      if (product.expiration_date) {
+        // Se for um objeto dayjs, converte para string
+        if (product.expiration_date.format) {
+          formatted.expiration_date = product.expiration_date.format("YYYY-MM-DD");
+        } else if (typeof product.expiration_date === "string") {
+          formatted.expiration_date = product.expiration_date;
+        } else if (product.expiration_date instanceof Date) {
+          formatted.expiration_date = product.expiration_date.toISOString().split("T")[0];
+        }
+      }
+
+      // Adiciona id_category apenas se existir e for válido
+      if (product.id_category) {
+        // Converte para número se for string
+        const categoryId = typeof product.id_category === "string" 
+          ? parseInt(product.id_category, 10) 
+          : product.id_category;
+        
+        if (!isNaN(categoryId) && categoryId > 0) {
+          formatted.id_category = categoryId;
+        }
+      }
+
+      return formatted;
+    });
+
+    console.log("Produtos formatados para envio:", {
+      quantidade: formattedProducts.length,
+      primeiroProduto: formattedProducts[0],
+      formato: Array.isArray(formattedProducts) ? "array" : typeof formattedProducts,
+    });
 
     onSubmit(formattedProducts);
   };

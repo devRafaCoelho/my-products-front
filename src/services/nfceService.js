@@ -9,18 +9,19 @@ const parseNFCeUrl = (qrCodeUrl) => {
   try {
     // Formato comum: https://www.sefaz.ce.gov.br/nfce/consulta?p=CHAVE|VERSAO|AMBIENTE|...
     // Ou: http://www.nfce.sefaz.ce.gov.br/nfce/consulta?p=...
+    // SEFAZ Bahia: http://nfe.sefaz.ba.gov.br/servicos/nfce/Modulos/Geral/NFCEC_consulta_danfe.aspx?p=...
     const url = new URL(qrCodeUrl);
     const params = url.searchParams.get("p");
     
     if (!params) {
-      throw new Error("URL do QR Code inválida");
+      throw new Error("URL do QR Code inválida - parâmetro 'p' não encontrado");
     }
 
     // Os parâmetros vêm separados por |
     const parts = params.split("|");
     
     if (parts.length < 4) {
-      throw new Error("Formato de QR Code inválido");
+      throw new Error(`Formato de QR Code inválido - esperado pelo menos 4 partes, encontrado ${parts.length}`);
     }
 
     return {
@@ -28,6 +29,7 @@ const parseNFCeUrl = (qrCodeUrl) => {
       versao: parts[1],
       ambiente: parts[2],
       // Outros parâmetros podem estar presentes
+      fullParams: params, // Mantém os parâmetros completos para reconstruir URL
     };
   } catch (error) {
     throw new Error("Erro ao processar URL do QR Code: " + error.message);
@@ -41,29 +43,80 @@ const parseNFCeUrl = (qrCodeUrl) => {
  */
 export const consultNFCe = async (qrCodeUrl) => {
   try {
+    // Normaliza a URL se necessário
+    let urlToUse = qrCodeUrl;
+    if (!urlToUse.match(/^https?:\/\//i)) {
+      urlToUse = `https://${urlToUse}`;
+    }
+    
+    console.log("Consultando NFCe na URL:", urlToUse);
+    
     // Extrai os parâmetros da URL
-    const nfceParams = parseNFCeUrl(qrCodeUrl);
+    const nfceParams = parseNFCeUrl(urlToUse);
+    console.log("Parâmetros extraídos:", nfceParams);
     
     // Tenta consultar diretamente na SEFAZ
     // Nota: A SEFAZ pode ter CORS bloqueado, então pode ser necessário usar um proxy/backend
     try {
       // Primeira tentativa: consulta direta (pode falhar por CORS)
-      const response = await axios.get(qrCodeUrl, {
+      const response = await axios.get(urlToUse, {
         headers: {
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
         },
-        timeout: 10000,
+        timeout: 20000,
+        maxRedirects: 5,
+        validateStatus: function (status) {
+          return status >= 200 && status < 400; // Aceita redirects
+        },
       });
 
       // Processa o HTML/XML retornado
-      return parseNFCeResponse(response.data, nfceParams);
-    } catch (corsError) {
+      console.log("Resposta recebida da SEFAZ, tamanho:", response.data?.length || 0);
+      console.log("URL final após redirects:", response.request?.responseURL || urlToUse);
+      
+      // Verifica se recebeu página sintética (Bahia) e tenta obter DANFE completa
+      const htmlContent = response.data;
+      if (htmlContent.includes("Sintetico") || htmlContent.includes("sintético")) {
+        console.log("Página sintética detectada, tentando obter DANFE completa...");
+        
+        // Tenta construir URL da DANFE completa para Bahia
+        if (urlToUse.includes("sefaz.ba.gov.br")) {
+          const danfeUrl = `http://nfe.sefaz.ba.gov.br/servicos/nfce/Modulos/Geral/NFCEC_consulta_danfe.aspx?p=${nfceParams.fullParams}`;
+          console.log("Tentando acessar DANFE completa:", danfeUrl);
+          
+          try {
+            const danfeResponse = await axios.get(danfeUrl, {
+              headers: {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+              },
+              timeout: 20000,
+            });
+            console.log("DANFE completa obtida, tamanho:", danfeResponse.data?.length || 0);
+            return parseNFCeResponse(danfeResponse.data);
+          } catch (danfeError) {
+            console.warn("Não foi possível obter DANFE completa, usando página sintética:", danfeError.message);
+            // Continua com a página sintética
+          }
+        }
+      }
+      
+      return parseNFCeResponse(htmlContent);
+    } catch (error) {
+      console.error("Erro na consulta:", error);
+      
       // Se falhar por CORS, tenta usar a API do backend (se disponível)
       // Ou retorna erro informando que precisa de proxy
-      throw new Error(
-        "Não foi possível consultar a nota fiscal diretamente. " +
-        "É necessário usar um serviço backend para fazer a consulta na SEFAZ devido a restrições de CORS."
-      );
+      if (error.code === "ERR_NETWORK" || error.message?.includes("CORS")) {
+        throw new Error(
+          "Não foi possível consultar a nota fiscal diretamente devido a restrições de CORS. " +
+          "É necessário usar um serviço backend para fazer a consulta na SEFAZ."
+        );
+      }
+      
+      throw error;
     }
   } catch (error) {
     console.error("Erro ao consultar NFCe:", error);
@@ -77,7 +130,7 @@ export const consultNFCe = async (qrCodeUrl) => {
  * @param {Object} params - Parâmetros da nota fiscal
  * @returns {Array} Array de produtos extraídos
  */
-const parseNFCeResponse = (htmlContent, params) => {
+const parseNFCeResponse = (htmlContent) => {
   const products = [];
   
   try {
@@ -85,10 +138,23 @@ const parseNFCeResponse = (htmlContent, params) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, "text/html");
     
+    // Verifica se é página sintética (sem produtos visíveis)
+    const isSynthetic = htmlContent.includes("Sintetico") || 
+                        htmlContent.includes("sintético") ||
+                        doc.querySelector("body")?.textContent?.includes("Sintetico");
+    
+    if (isSynthetic) {
+      console.warn("Página sintética detectada - produtos não estão disponíveis nesta visualização");
+      // Tenta extrair informações básicas mesmo assim
+      return parseProductsFromText(htmlContent);
+    }
+    
     // Tenta encontrar a tabela de produtos na página da SEFAZ
     // O formato pode variar entre estados, então tentamos múltiplos seletores
+    // Para Bahia, pode estar em tabelas específicas
     const productRows = doc.querySelectorAll(
-      "table tr, .produto, .item-produto, [class*='produto'], [class*='item']"
+      "table tr, .produto, .item-produto, [class*='produto'], [class*='item'], " +
+      "[id*='produto'], [id*='item'], .linhaProduto, tr[class*='Item']"
     );
 
     if (productRows.length === 0) {
@@ -229,24 +295,72 @@ const parseProductsFromText = (htmlContent) => {
  * Consulta a nota fiscal usando um serviço backend (recomendado)
  * @param {string} qrCodeUrl - URL do QR Code
  * @param {string} backendUrl - URL do backend que fará a consulta na SEFAZ
+ * @param {string} token - Token de autenticação
  * @returns {Promise<Array>} Array de produtos
  */
-export const consultNFCeViaBackend = async (qrCodeUrl, backendUrl) => {
+export const consultNFCeViaBackend = async (qrCodeUrl, backendUrl, token) => {
   try {
-    const response = await axios.post(`${backendUrl}/api/nfce/consult`, {
-      qrCodeUrl: qrCodeUrl,
-    });
+    const response = await axios.post(
+      `${backendUrl}/api/nfce/consult`,
+      {
+        qrCodeUrl: qrCodeUrl,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    if (response.data && response.data.products) {
-      return response.data.products;
+    // Verifica se a resposta tem produtos (mesmo que vazio)
+    if (response.data) {
+      // Se tem produtos no array (mesmo que vazio), é uma resposta válida
+      if (Array.isArray(response.data.products)) {
+        return response.data.products;
+      }
+      // Se não tem produtos mas tem mensagem, pode ser que não encontrou produtos
+      if (response.data.message && response.status === 404) {
+        // Backend retornou 404 mas com mensagem - provavelmente não encontrou produtos
+        return []; // Retorna array vazio para ser tratado pelo componente
+      }
     }
 
     throw new Error("Resposta do backend inválida");
   } catch (error) {
     console.error("Erro ao consultar via backend:", error);
-    throw new Error(
-      error.response?.data?.message ||
-        "Erro ao consultar nota fiscal no servidor"
-    );
+    
+    // Trata erros específicos
+    if (error.response) {
+      // Erro com resposta do servidor
+      if (error.response.status === 404) {
+        // Verifica se é 404 de produtos não encontrados ou rota não encontrada
+        const errorMessage = error.response?.data?.message || "";
+        if (errorMessage.includes("produto") || errorMessage.includes("Nenhum")) {
+          // É 404 de produtos não encontrados - retorna array vazio
+          return [];
+        }
+        // É 404 de rota não encontrada
+        throw new Error(
+          "Rota não encontrada no backend. Verifique se a rota /api/nfce/consult está registrada corretamente."
+        );
+      }
+      if (error.response.status === 401 || error.response.status === 403) {
+        throw new Error("Não autorizado. Verifique seu token de autenticação.");
+      }
+      throw new Error(
+        error.response?.data?.message ||
+          `Erro no servidor (${error.response.status}): ${error.response.statusText}`
+      );
+    } else if (error.request) {
+      // Requisição feita mas sem resposta
+      throw new Error(
+        "Não foi possível conectar ao servidor. Verifique se o backend está rodando."
+      );
+    } else {
+      // Erro ao configurar a requisição
+      throw new Error(
+        error.message || "Erro ao consultar nota fiscal no servidor"
+      );
+    }
   }
 };

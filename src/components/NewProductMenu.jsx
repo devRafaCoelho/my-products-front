@@ -1,5 +1,8 @@
 import { Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
-import { Edit as EditIcon, QrCodeScanner as QrCodeScannerIcon } from "@mui/icons-material";
+import {
+  Edit as EditIcon,
+  QrCodeScanner as QrCodeScannerIcon,
+} from "@mui/icons-material";
 
 function NewProductMenu({
   anchorEl,
@@ -45,7 +48,7 @@ function NewProductMenu({
         <ListItemIcon>
           <QrCodeScannerIcon fontSize="small" />
         </ListItemIcon>
-        <ListItemText>Scanear nota</ListItemText>
+        <ListItemText>Escanear nota</ListItemText>
       </MenuItem>
     </Menu>
   );
