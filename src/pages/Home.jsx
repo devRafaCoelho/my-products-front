@@ -170,7 +170,15 @@ function Home() {
     await handleOpenCreateDrawer();
   };
 
-  const handleScanReceipt = () => {
+  const handleScanReceipt = async () => {
+    if (userData?.token) {
+      try {
+        const list = await categoryService.getAllCategories(userData.token);
+        setCategories(Array.isArray(list) ? list : []);
+      } catch {
+        setCategories([]);
+      }
+    }
     setReceiptScannerOpen(true);
   };
 

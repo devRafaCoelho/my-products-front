@@ -351,7 +351,10 @@ function Products() {
     setReceiptScannerOpen(true);
   };
 
-  const handleProductsExtracted = (products) => {
+  const handleProductsExtracted = async (products) => {
+    if (categories.length === 0) {
+      await fetchCategories();
+    }
     setExtractedProducts(products);
     setReceiptReviewOpen(true);
   };
