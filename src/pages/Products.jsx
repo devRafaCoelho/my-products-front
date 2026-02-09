@@ -50,6 +50,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   ViewList as ViewListIcon,
   TableChart as TableChartIcon,
+  Inventory2Outlined as Inventory2OutlinedIcon,
 } from "@mui/icons-material";
 import { AppContext } from "../contexts/AppContext";
 import productService from "../services/productService";
@@ -108,7 +109,7 @@ function Products() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [anchorElNewProduct, setAnchorElNewProduct] = useState(null);
-  
+
   // Estados para escaneamento de nota fiscal
   const [receiptScannerOpen, setReceiptScannerOpen] = useState(false);
   const [receiptReviewOpen, setReceiptReviewOpen] = useState(false);
@@ -357,14 +358,16 @@ function Products() {
 
   const handleBatchCreate = async (products) => {
     if (!userData?.token) return;
-    
+
     setBatchLoading(true);
     setFormError(null);
-    
+
     try {
       await productService.createProductsBatch(products, userData.token);
       setSuccessMessage(
-        `${products.length} produto${products.length !== 1 ? "s" : ""} cadastrado${products.length !== 1 ? "s" : ""} com sucesso!`
+        `${products.length} produto${
+          products.length !== 1 ? "s" : ""
+        } cadastrado${products.length !== 1 ? "s" : ""} com sucesso!`
       );
       setSnackbarOpen(true);
       setReceiptReviewOpen(false);
@@ -372,9 +375,7 @@ function Products() {
       setExtractedProducts([]);
       fetchProducts();
     } catch (err) {
-      setFormError(
-        err?.message || err?.error || "Erro ao cadastrar produtos"
-      );
+      setFormError(err?.message || err?.error || "Erro ao cadastrar produtos");
     } finally {
       setBatchLoading(false);
     }
@@ -456,6 +457,30 @@ function Products() {
     if (!date) return "-";
     return new Date(date).toLocaleDateString("pt-BR");
   };
+
+  const emptyStateContent = (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        py: 6,
+        px: 2,
+      }}
+    >
+      <Inventory2OutlinedIcon
+        sx={{ fontSize: 80, color: "primary.main", mb: 2 }}
+      />
+      <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
+        Nenhum produto encontrado
+      </Typography>
+      <Typography variant="body2" color="text.secondary" align="center">
+        Adicione produtos usando o botão acima ou importe a partir de um cupom
+        fiscal.
+      </Typography>
+    </Box>
+  );
 
   return (
     <Box
@@ -639,7 +664,11 @@ function Products() {
           >
             <Table
               stickyHeader
-              sx={{ "& .MuiTableCell-root": { whiteSpace: "nowrap" } }}
+              sx={{
+                height: "100%",
+                minHeight: "100%",
+                "& .MuiTableCell-root": { whiteSpace: "nowrap" },
+              }}
             >
               <TableHead>
                 <TableRow>
@@ -715,10 +744,29 @@ function Products() {
                   <TableRow
                     sx={{
                       backgroundColor: (t) => t.palette.action.hover,
+                      height: "100%",
                     }}
                   >
-                    <TableCell colSpan={7} align="center">
-                      Nenhum produto encontrado
+                    <TableCell
+                      colSpan={7}
+                      align="center"
+                      sx={{
+                        height: "100%",
+                        verticalAlign: "middle",
+                        borderBottom: "none",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: "100%",
+                          minHeight: "calc(100vh - 320px)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {emptyStateContent}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -793,14 +841,7 @@ function Products() {
                 <CircularProgress />
               </Box>
             ) : sortedListProducts.length === 0 ? (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                align="center"
-                sx={{ py: 4 }}
-              >
-                Nenhum produto encontrado
-              </Typography>
+              emptyStateContent
             ) : (
               <>
                 {sortedListProducts.map((product) => (
