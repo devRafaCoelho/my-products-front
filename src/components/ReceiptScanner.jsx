@@ -114,14 +114,14 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
         { facingMode: "environment" }, // Câmera traseira
         {
           fps: 10,
-          qrbox: function(viewfinderWidth, viewfinderHeight) {
+          qrbox: function (viewfinderWidth, viewfinderHeight) {
             // Usa 80% da área visível para melhor detecção
             const minEdgePercentage = 0.8;
             const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
             const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
             return {
               width: qrboxSize,
-              height: qrboxSize
+              height: qrboxSize,
             };
           },
           aspectRatio: 1.0,
@@ -230,10 +230,10 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
 
       // Cria instância do scanner
       html5QrCodeInstance = new Html5Qrcode(tempElementId);
-      
+
       // Escaneia o arquivo
       const decodedText = await html5QrCodeInstance.scanFile(file, true);
-      
+
       // Limpa a instância
       try {
         await html5QrCodeInstance.clear();
@@ -241,12 +241,12 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
         // Ignora erros ao limpar
         console.debug("Erro ao limpar scanner:", clearError);
       }
-      
+
       // Remove o elemento temporário
       if (tempElement && tempElement.parentNode) {
         tempElement.parentNode.removeChild(tempElement);
       }
-      
+
       if (decodedText) {
         await handleQRCodeScanned(decodedText);
       } else {
@@ -254,7 +254,7 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
       }
     } catch (err) {
       console.error("Erro ao escanear imagem:", err);
-      
+
       // Limpa recursos em caso de erro
       try {
         if (html5QrCodeInstance) {
@@ -263,16 +263,17 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
       } catch {
         // Ignora erros ao limpar
       }
-      
+
       const tempElement = document.getElementById(tempElementId);
       if (tempElement && tempElement.parentNode) {
         tempElement.parentNode.removeChild(tempElement);
       }
-      
+
       setError(
         err.message?.includes("not found") || err.message?.includes("undefined")
           ? "Erro ao processar a imagem. Tente novamente com outra imagem."
-          : err.message || "Não foi possível ler o QR Code da imagem. Verifique se a imagem está nítida e contém um QR Code válido."
+          : err.message ||
+              "Não foi possível ler o QR Code da imagem. Verifique se a imagem está nítida e contém um QR Code válido."
       );
     } finally {
       setLoading(false);
@@ -289,37 +290,41 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
 
   const handleQRCodeScanned = async (qrCodeUrl) => {
     console.log("URL capturada do QR Code:", qrCodeUrl);
-    
+
     // Normaliza a URL - adiciona protocolo se não tiver
     let normalizedUrl = qrCodeUrl.trim();
-    
+
     // Se não começar com http:// ou https://, adiciona https://
     if (!normalizedUrl.match(/^https?:\/\//i)) {
       normalizedUrl = `https://${normalizedUrl}`;
     }
-    
+
     console.log("URL normalizada:", normalizedUrl);
-    
+
     // Verifica se é uma URL de nota fiscal
     if (
       !normalizedUrl.includes("sefaz") &&
       !normalizedUrl.includes("nfce") &&
       !normalizedUrl.includes("nfe")
     ) {
-      setError("QR Code não é de uma nota fiscal válida. URL capturada: " + normalizedUrl);
+      setError(
+        "QR Code não é de uma nota fiscal válida. URL capturada: " +
+          normalizedUrl
+      );
       return;
     }
 
     // Verifica se a URL tem parâmetros (query string)
     try {
       const urlObj = new URL(normalizedUrl);
-      const hasParams = urlObj.searchParams.toString().length > 0 || urlObj.search.length > 0;
-      
+      const hasParams =
+        urlObj.searchParams.toString().length > 0 || urlObj.search.length > 0;
+
       if (!hasParams) {
         setError(
           "URL do QR Code parece estar incompleta (sem parâmetros). " +
-          "Certifique-se de que o QR Code foi escaneado completamente. " +
-          `URL capturada: ${normalizedUrl}`
+            "Certifique-se de que o QR Code foi escaneado completamente. " +
+            `URL capturada: ${normalizedUrl}`
         );
         return;
       }
@@ -353,42 +358,51 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
         }
       } catch (backendError) {
         // Verifica se é erro 404 (rota não encontrada)
-        if (backendError.message?.includes("404") || backendError.message?.includes("não encontrada")) {
+        if (
+          backendError.message?.includes("404") ||
+          backendError.message?.includes("não encontrada")
+        ) {
           // Não tenta consulta direta se a rota não existe
           throw new Error(
             "A rota de consulta NFCe não está disponível no backend. " +
-            "Por favor, verifique se a rota /api/nfce/consult foi criada e registrada corretamente. " +
-            `Erro: ${backendError.message}`
+              "Por favor, verifique se a rota /api/nfce/consult foi criada e registrada corretamente. " +
+              `Erro: ${backendError.message}`
           );
         }
-        
+
         // Se for outro erro do backend, também não tenta consulta direta (vai falhar por CORS)
-        if (backendError.message?.includes("servidor") || backendError.message?.includes("conectar")) {
+        if (
+          backendError.message?.includes("servidor") ||
+          backendError.message?.includes("conectar")
+        ) {
           throw new Error(
             `Erro ao conectar com o backend: ${backendError.message}. ` +
-            "Verifique se o servidor está rodando e acessível."
+              "Verifique se o servidor está rodando e acessível."
           );
         }
-        
+
         // Se for erro de autenticação, não tenta consulta direta
-        if (backendError.message?.includes("autorizado") || backendError.message?.includes("token")) {
+        if (
+          backendError.message?.includes("autorizado") ||
+          backendError.message?.includes("token")
+        ) {
           throw backendError;
         }
-        
+
         // Para outros erros, mostra mensagem específica
         throw backendError;
       }
 
       if (products.length === 0) {
-        throw new Error("Nenhum produto encontrado na nota fiscal");
+        throw new Error("Nenhum produto encontrado na nota fiscal!");
       }
 
       // Para o loading primeiro
       setLoading(false);
-      
+
       // Aguarda um momento para garantir que o estado seja atualizado
       await new Promise((resolve) => setTimeout(resolve, 100));
-      
+
       // Abre diálogo de confirmação antes de mostrar a revisão
       // Não fecha o diálogo principal ainda - só fecha quando confirmar ou cancelar
       setPendingProducts(products);
@@ -421,17 +435,17 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
       const file = new File([blob], "image.jpg", { type: blob.type });
 
       const products = await processReceiptImage(file);
-      
+
       if (products.length === 0) {
-        throw new Error("Nenhum produto encontrado na nota fiscal");
+        throw new Error("Nenhum produto encontrado na nota fiscal!");
       }
 
       // Para o loading primeiro
       setLoading(false);
-      
+
       // Aguarda um momento para garantir que o estado seja atualizado
       await new Promise((resolve) => setTimeout(resolve, 100));
-      
+
       // Abre diálogo de confirmação antes de mostrar a revisão
       // Não fecha o diálogo principal ainda - só fecha quando confirmar ou cancelar
       setPendingProducts(products);
@@ -474,405 +488,420 @@ function ReceiptScanner({ open, onClose, onProductsExtracted }) {
 
   return (
     <>
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography variant="h6">Escanear Nota Fiscal</Typography>
-          <IconButton onClick={handleClose} size="small">
-            <CloseIcon />
-          </IconButton>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="h6">Escanear Nota Fiscal</Typography>
+            <IconButton onClick={handleClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        {/* Tabs para escolher entre QR Code e OCR */}
+        <Box>
+          <Tabs
+            value={scanMode}
+            onChange={(_, newValue) => {
+              setScanMode(newValue);
+              handleStopQRScanner();
+              setPreview(null);
+              setQrCodeScanned(false);
+              setScannedUrl(null);
+              setError(null); // Limpa erros ao trocar de aba
+            }}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+          >
+            <Tab
+              label="Escanear QR Code"
+              value="qr"
+              icon={<QrCodeScannerIcon />}
+              iconPosition="start"
+            />
+            <Tab
+              label="Anexar imagem"
+              value="ocr"
+              icon={<PhotoCameraIcon />}
+              iconPosition="start"
+            />
+          </Tabs>
         </Box>
-      </DialogTitle>
 
-      {/* Tabs para escolher entre QR Code e OCR */}
-      <Box>
-        <Tabs
-          value={scanMode}
-          onChange={(_, newValue) => {
-            setScanMode(newValue);
-            handleStopQRScanner();
-            setPreview(null);
-            setQrCodeScanned(false);
-            setScannedUrl(null);
-            setError(null); // Limpa erros ao trocar de aba
-          }}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-        >
-          <Tab
-            label="Escanear QR Code"
-            value="qr"
-            icon={<QrCodeScannerIcon />}
-            iconPosition="start"
-          />
-          <Tab
-            label="Anexar imagem"
-            value="ocr"
-            icon={<PhotoCameraIcon />}
-            iconPosition="start"
-          />
-        </Tabs>
-      </Box>
+        <DialogContent sx={{ pt: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {error && <Alert severity="error">{error}</Alert>}
 
-      <DialogContent sx={{ pt: 2 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {error && <Alert severity="error">{error}</Alert>}
-
-          {/* Modo QR Code */}
-          {scanMode === "qr" && (
-            <>
-              {!scannerActive && !qrCodeScanned && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 3,
-                    py: 2,
-                  }}
-                >
-                  {/* Opção 1: Upload de imagem (RECOMENDADO para navegador web) */}
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <Typography variant="body1" fontWeight="medium">
-                      📷 Escanear de uma imagem (Recomendado)
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Tire uma foto do QR Code com seu celular e envie aqui, ou salve a imagem do QR Code e faça upload
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<PhotoCameraIcon />}
-                      onClick={() => {
-                        const input = document.createElement("input");
-                        input.type = "file";
-                        input.accept = "image/*";
-                        input.onchange = (e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleScanFromImage(file);
-                          }
-                        };
-                        input.click();
-                      }}
-                      disabled={loading}
-                      sx={{ alignSelf: "flex-start" }}
+            {/* Modo QR Code */}
+            {scanMode === "qr" && (
+              <>
+                {!scannerActive && !qrCodeScanned && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 3,
+                      py: 2,
+                    }}
+                  >
+                    {/* Opção 1: Upload de imagem (RECOMENDADO para navegador web) */}
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
                     >
-                      Selecionar Imagem do QR Code
-                    </Button>
-                  </Box>
-
-                  <Divider>ou</Divider>
-
-                  {/* Opção 2: URL manual */}
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <Typography variant="body1" fontWeight="medium">
-                      🔗 Colar URL do QR Code
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Se você já escaneou o QR Code com outro app, copie a URL completa e cole aqui
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        placeholder="Cole aqui a URL completa do QR Code (ex: https://nfe.sefaz.ba.gov.br/...?p=...)"
-                        value={manualUrl}
-                        onChange={(e) => setManualUrl(e.target.value)}
-                        disabled={loading}
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            handleManualUrlSubmit();
-                          }
+                      <Typography variant="body1" fontWeight="medium">
+                        📷 Escanear de uma imagem (Recomendado)
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Tire uma foto do QR Code com seu celular e envie aqui,
+                        ou salve a imagem do QR Code e faça upload
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<PhotoCameraIcon />}
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = "image/*";
+                          input.onchange = (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleScanFromImage(file);
+                            }
+                          };
+                          input.click();
                         }}
-                      />
+                        disabled={loading}
+                        sx={{ alignSelf: "flex-start" }}
+                      >
+                        Selecionar Imagem do QR Code
+                      </Button>
+                    </Box>
+
+                    <Divider>ou</Divider>
+
+                    {/* Opção 2: URL manual */}
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                    >
+                      <Typography variant="body1" fontWeight="medium">
+                        🔗 Colar URL do QR Code
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Se você já escaneou o QR Code com outro app, copie a URL
+                        completa e cole aqui
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          placeholder="Cole aqui a URL completa do QR Code (ex: https://nfe.sefaz.ba.gov.br/...?p=...)"
+                          value={manualUrl}
+                          onChange={(e) => setManualUrl(e.target.value)}
+                          disabled={loading}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              handleManualUrlSubmit();
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="outlined"
+                          onClick={handleManualUrlSubmit}
+                          disabled={!manualUrl.trim() || loading}
+                        >
+                          Consultar
+                        </Button>
+                      </Box>
+                    </Box>
+
+                    <Divider>ou</Divider>
+
+                    {/* Opção 3: Câmera (pode não funcionar em desktop) */}
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                    >
+                      <Typography variant="body1" fontWeight="medium">
+                        📹 Escanear com câmera
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Use a webcam do seu computador ou câmera do dispositivo
+                        (pode não estar disponível em todos os navegadores)
+                      </Typography>
                       <Button
                         variant="outlined"
-                        onClick={handleManualUrlSubmit}
-                        disabled={!manualUrl.trim() || loading}
+                        startIcon={<QrCodeScannerIcon />}
+                        onClick={handleStartQRScanner}
+                        disabled={loading}
+                        sx={{ alignSelf: "flex-start" }}
                       >
-                        Consultar
+                        Iniciar Escaneamento
+                      </Button>
+                    </Box>
+
+                    {error && (
+                      <Alert severity="error" sx={{ mt: 2 }}>
+                        {error}
+                      </Alert>
+                    )}
+                  </Box>
+                )}
+
+                {scannerActive && !qrCodeScanned && (
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    {error && (
+                      <Alert severity="error" onClose={() => setError(null)}>
+                        {error}
+                      </Alert>
+                    )}
+                    <Paper
+                      elevation={2}
+                      sx={{
+                        position: "relative",
+                        width: "100%",
+                        minHeight: "300px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                        bgcolor: "background.paper",
+                      }}
+                    >
+                      <Box
+                        id="qr-reader"
+                        sx={{
+                          width: "100%",
+                          minHeight: "300px",
+                        }}
+                      />
+                    </Paper>
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <Button variant="outlined" onClick={handleStopQRScanner}>
+                        Parar Escaneamento
                       </Button>
                     </Box>
                   </Box>
+                )}
 
-                  <Divider>ou</Divider>
+                {qrCodeScanned && scannedUrl && (
+                  <Alert severity="success">
+                    QR Code escaneado! Consultando nota fiscal...
+                  </Alert>
+                )}
+              </>
+            )}
 
-                  {/* Opção 3: Câmera (pode não funcionar em desktop) */}
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <Typography variant="body1" fontWeight="medium">
-                      📹 Escanear com câmera
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Use a webcam do seu computador ou câmera do dispositivo (pode não estar disponível em todos os navegadores)
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      startIcon={<QrCodeScannerIcon />}
-                      onClick={handleStartQRScanner}
-                      disabled={loading}
-                      sx={{ alignSelf: "flex-start" }}
-                    >
-                      Iniciar Escaneamento
-                    </Button>
-                  </Box>
-
-                  {error && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      {error}
-                    </Alert>
-                  )}
-                </Box>
-              )}
-
-              {scannerActive && !qrCodeScanned && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {error && (
-                    <Alert severity="error" onClose={() => setError(null)}>
-                      {error}
-                    </Alert>
-                  )}
-                  <Paper
-                    elevation={2}
+            {/* Modo OCR */}
+            {scanMode === "ocr" && (
+              <>
+                {!preview && (
+                  <Box
                     sx={{
-                      position: "relative",
-                      width: "100%",
-                      minHeight: "300px",
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      bgcolor: "background.paper",
+                      flexDirection: "column",
+                      gap: 2,
+                      py: 4,
                     }}
                   >
-                    <Box
-                      id="qr-reader"
-                      sx={{
-                        width: "100%",
-                        minHeight: "300px",
-                      }}
-                    />
-                  </Paper>
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <Button variant="outlined" onClick={handleStopQRScanner}>
-                      Parar Escaneamento
-                    </Button>
-                  </Box>
-                </Box>
-              )}
-
-              {qrCodeScanned && scannedUrl && (
-                <Alert severity="success">
-                  QR Code escaneado! Consultando nota fiscal...
-                </Alert>
-              )}
-            </>
-          )}
-
-          {/* Modo OCR */}
-          {scanMode === "ocr" && (
-            <>
-              {!preview && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                    py: 4,
-                  }}
-                >
-                  <Button
-                    variant="outlined"
-                    startIcon={<CloudUploadIcon />}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Selecionar Arquivo
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleFileSelect}
-                  />
-                </Box>
-              )}
-
-              {preview && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Paper
-                    elevation={2}
-                    sx={{
-                      position: "relative",
-                      width: "100%",
-                      maxHeight: "400px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      style={{
-                        width: "100%",
-                        height: "auto",
-                        display: "block",
-                      }}
-                    />
-                  </Paper>
-                  <Box sx={{ display: "flex", gap: 2 }}>
                     <Button
                       variant="outlined"
-                      onClick={() => {
-                        setPreview(null);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = "";
-                        }
+                      startIcon={<CloudUploadIcon />}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Selecionar Arquivo
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handleFileSelect}
+                    />
+                  </Box>
+                )}
+
+                {preview && (
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <Paper
+                      elevation={2}
+                      sx={{
+                        position: "relative",
+                        width: "100%",
+                        maxHeight: "400px",
+                        overflow: "hidden",
                       }}
                     >
-                      Trocar Imagem
-                    </Button>
+                      <img
+                        src={preview}
+                        alt="Preview"
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          display: "block",
+                        }}
+                      />
+                    </Paper>
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setPreview(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                          }
+                        }}
+                      >
+                        Trocar Imagem
+                      </Button>
+                    </Box>
                   </Box>
-                </Box>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
 
-          {loading && (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                py: 4,
-              }}
-            >
-              <CircularProgress sx={{ alignSelf: "flex-start" }} />
-              <Typography variant="body2" color="text.secondary">
-                {scanMode === "qr"
-                  ? "Consultando nota fiscal na SEFAZ..."
-                  : "Processando imagem e extraindo produtos..."}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
-          Cancelar
-        </Button>
-        {scanMode === "ocr" && (
-          <Button
-            onClick={handleProcessOCR}
-            variant="contained"
-            disabled={!preview || loading}
-            startIcon={loading && <CircularProgress size={20} />}
-          >
-            Processar Nota
+            {loading && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  py: 4,
+                }}
+              >
+                <CircularProgress sx={{ alignSelf: "flex-start" }} />
+                <Typography variant="body2" color="text.secondary">
+                  {scanMode === "qr"
+                    ? "Consultando nota fiscal na SEFAZ..."
+                    : "Processando imagem e extraindo produtos..."}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} disabled={loading}>
+            Cancelar
           </Button>
-        )}
-      </DialogActions>
-    </Dialog>
+          {scanMode === "ocr" && (
+            <Button
+              onClick={handleProcessOCR}
+              variant="contained"
+              disabled={!preview || loading}
+              startIcon={loading && <CircularProgress size={20} />}
+            >
+              Processar Nota
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
-    {/* Diálogo de Confirmação - Renderizado fora do diálogo principal */}
-    <Dialog
-      open={confirmDialogOpen}
-      onClose={() => {
-        setConfirmDialogOpen(false);
-        setPendingProducts([]);
-        // Fecha o diálogo principal ao fechar o de confirmação
-        handleClose();
-      }}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle>Confirmar Produtos Extraídos</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Gostaria de adicionar os {pendingProducts.length} produto{pendingProducts.length !== 1 ? "s" : ""} na sua lista de produtos?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          onClick={() => {
-            setConfirmDialogOpen(false);
-            setPendingProducts([]);
-            // Fecha o diálogo principal ao cancelar
-            handleClose();
-          }}
-          color="inherit"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={() => {
-            setConfirmDialogOpen(false);
-            // Fecha o diálogo principal antes de abrir a revisão
-            handleClose();
-            // Abre a tela de revisão
-            onProductsExtracted(pendingProducts);
-            setPendingProducts([]);
-          }}
-          variant="contained"
-          color="primary"
-          autoFocus
-        >
-          Sim, adicionar produtos
-        </Button>
-      </DialogActions>
-    </Dialog>
+      {/* Diálogo de Confirmação - Renderizado fora do diálogo principal */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => {
+          setConfirmDialogOpen(false);
+          setPendingProducts([]);
+          // Fecha o diálogo principal ao fechar o de confirmação
+          handleClose();
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Confirmar Produtos Extraídos</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Gostaria de adicionar os {pendingProducts.length} produto
+            {pendingProducts.length !== 1 ? "s" : ""} na sua lista de produtos?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setConfirmDialogOpen(false);
+              setPendingProducts([]);
+              // Fecha o diálogo principal ao cancelar
+              handleClose();
+            }}
+            color="inherit"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => {
+              setConfirmDialogOpen(false);
+              // Fecha o diálogo principal antes de abrir a revisão
+              handleClose();
+              // Abre a tela de revisão
+              onProductsExtracted(pendingProducts);
+              setPendingProducts([]);
+            }}
+            variant="contained"
+            color="primary"
+            autoFocus
+          >
+            Sim, adicionar produtos
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-    {/* Diálogo de Confirmação - Renderizado fora do diálogo principal */}
-    <Dialog
-      open={confirmDialogOpen}
-      onClose={() => {
-        setConfirmDialogOpen(false);
-        setPendingProducts([]);
-        // Fecha o diálogo principal ao fechar o de confirmação
-        handleClose();
-      }}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle>Confirmar Produtos Extraídos</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Gostaria de adicionar os {pendingProducts.length} produto{pendingProducts.length !== 1 ? "s" : ""} na sua lista de produtos?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          onClick={() => {
-            setConfirmDialogOpen(false);
-            setPendingProducts([]);
-            // Fecha o diálogo principal ao cancelar
-            handleClose();
-          }}
-          color="inherit"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={() => {
-            setConfirmDialogOpen(false);
-            // Fecha o diálogo principal antes de abrir a revisão
-            handleClose();
-            // Abre a tela de revisão
-            onProductsExtracted(pendingProducts);
-            setPendingProducts([]);
-          }}
-          variant="contained"
-          color="primary"
-          autoFocus
-        >
-          Sim, adicionar produtos
-        </Button>
-      </DialogActions>
-    </Dialog>
+      {/* Diálogo de Confirmação - Renderizado fora do diálogo principal */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => {
+          setConfirmDialogOpen(false);
+          setPendingProducts([]);
+          // Fecha o diálogo principal ao fechar o de confirmação
+          handleClose();
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Confirmar Produtos Extraídos</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Gostaria de adicionar os {pendingProducts.length} produto
+            {pendingProducts.length !== 1 ? "s" : ""} na sua lista de produtos?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setConfirmDialogOpen(false);
+              setPendingProducts([]);
+              // Fecha o diálogo principal ao cancelar
+              handleClose();
+            }}
+            color="inherit"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => {
+              setConfirmDialogOpen(false);
+              // Fecha o diálogo principal antes de abrir a revisão
+              handleClose();
+              // Abre a tela de revisão
+              onProductsExtracted(pendingProducts);
+              setPendingProducts([]);
+            }}
+            variant="contained"
+            color="primary"
+            autoFocus
+          >
+            Sim, adicionar produtos
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
